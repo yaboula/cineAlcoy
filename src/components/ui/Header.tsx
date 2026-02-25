@@ -18,6 +18,7 @@ import { Search } from "lucide-react";
 const NAV_LINKS = [
   { label: "Películas", href: "/movies" },
   { label: "Series", href: "/series" },
+  { label: "Mi lista", href: "/watchlist" },
 ];
 
 export default function Header() {

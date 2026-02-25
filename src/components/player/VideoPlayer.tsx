@@ -19,6 +19,7 @@ import { MonitorPlay, ChevronDown, Play } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import PlayerDisclaimer from "@/components/ui/PlayerDisclaimer";
+import { useWatchProgress } from "@/hooks/useWatchProgress";
 
 // ── Sources ──────────────────────────────────────
 interface PlayerSource {
@@ -63,13 +64,33 @@ interface VideoPlayerProps {
   season?: number;
   episode?: number;
   backdropUrl?: string | null;
+  posterPath?: string | null;
   title?: string;
+  genreIds?: number[];
+  releaseYear?: number | null;
+  durationSeconds?: number;
 }
 
 // ── Component ────────────────────────────────────
-export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl, title }: VideoPlayerProps) {
+export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl, posterPath, title, genreIds, releaseYear, durationSeconds }: VideoPlayerProps) {
   const s = season ?? 1;
   const e = episode ?? 1;
+
+  // ── Watch progress (elapsed-time based for iframe players) ──
+  const { saveProgress } = useWatchProgress({
+    tmdbId,
+    mediaType: type,
+    title:           title ?? "",
+    posterPath:      posterPath,
+    backdropPath:    backdropUrl,
+    genreIds:        genreIds ?? [],
+    releaseYear:     releaseYear,
+    durationSeconds: durationSeconds ?? 0,
+  });
+
+  const elapsedRef  = useRef(0);
+  const timerRef    = useRef<ReturnType<typeof setInterval>>(undefined);
+  const hasSavedRef = useRef(false);
 
   // Start as false so the iframe is always visible in Brave
   // (Brave may suppress cross-origin onLoad events)
@@ -91,6 +112,26 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
   const iframeKey = `${sourceId}-${tmdbId}-${s}-${e}`;
   const iframeSrc = active.buildUrl(tmdbId, type, s, e);
   const hasStarted = startedKey === iframeKey;
+
+  // Start elapsed timer once the user presses play, save every 30 s
+  useEffect(() => {
+    if (!hasStarted) return;
+    timerRef.current = setInterval(() => {
+      elapsedRef.current += 30;
+      const pct = durationSeconds ? elapsedRef.current / durationSeconds : 0;
+      saveProgress(elapsedRef.current, pct >= 0.9);
+    }, 30_000);
+
+    return () => {
+      clearInterval(timerRef.current);
+      // Save on unmount if we watched at least 30 s
+      if (elapsedRef.current >= 30 && !hasSavedRef.current) {
+        hasSavedRef.current = true;
+        saveProgress(elapsedRef.current, false);
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasStarted, iframeKey]);
 
   // Auto-hide spinner after 3s — fallback for browsers that suppress onLoad
   useEffect(() => {

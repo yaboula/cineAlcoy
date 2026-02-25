@@ -93,6 +93,10 @@ export default async function MoviePage({ params }: PageProps) {
           type="movie"
           backdropUrl={movie.backdrop_path ? getTMDBImageUrl(movie.backdrop_path, "w780") : null}
           title={movie.title}
+          posterPath={movie.poster_path}
+          genreIds={movie.genres.map((g) => g.id)}
+          releaseYear={movie.release_date ? new Date(movie.release_date).getFullYear() : null}
+          durationSeconds={movie.runtime ? movie.runtime * 60 : undefined}
         />
       </section>
 

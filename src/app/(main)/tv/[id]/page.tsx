@@ -102,6 +102,9 @@ export default async function TVPage({ params }: PageProps) {
         initialSeason={firstSeason?.season_number ?? 1}
         backdropUrl={show.backdrop_path ? getTMDBImageUrl(show.backdrop_path, "w780") : null}
         seriesTitle={show.name}
+        posterPath={show.poster_path}
+        genreIds={show.genres.map((g) => g.id)}
+        releaseYear={show.first_air_date ? new Date(show.first_air_date).getFullYear() : null}
       />
 
       {/* ── Recommendations ─────────────────────── */}

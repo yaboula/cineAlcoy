@@ -1,21 +1,35 @@
-"use client";
+﻿"use client";
 
-// ──────────────────────────────────────────────────
-// ContinueWatchingRow — Sprint 9
-// Shows items from localStorage watch history.
-// Hidden when history is empty.
-// ──────────────────────────────────────────────────
+// 
+// ContinueWatchingRow  Sprint 9  updated Sprint 12
+// Shows in-progress items from Supabase watch history.
+// Hidden when there are no items.
+// 
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import ImageWithFallback from "@/components/ui/ImageWithFallback";
-import { useWatchHistory } from "@/hooks/useWatchHistory";
+import { useProfile } from "@/hooks/useProfile";
+import { getContinueWatching } from "@/lib/supabase/watch-history";
 import { getTMDBImageUrl } from "@/lib/utils";
+import type { WatchHistoryRow } from "@/lib/supabase/types";
 
 export default function ContinueWatchingRow() {
-  const { history, isMounted } = useWatchHistory();
+  const { profile, loading: profileLoading } = useProfile();
+  const [items, setItems] = useState<WatchHistoryRow[]>([]);
+  const [mounted, setMounted] = useState(false);
 
-  // Don't render until client hydration is complete
-  if (!isMounted || history.length === 0) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!profile) return;
+    getContinueWatching(profile.id, 20).then(setItems);
+  }, [profile]);
+
+  // Don''t render until client hydration is complete or while loading
+  if (!mounted || profileLoading || items.length === 0) return null;
 
   return (
     <section aria-label="Continuar viendo">
@@ -23,12 +37,17 @@ export default function ContinueWatchingRow() {
         Continuar viendo
       </h2>
       <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border">
-        {history.map((item) => {
-          const href = item.type === "movie" ? `/movie/${item.tmdb_id}` : `/tv/${item.tmdb_id}`;
+        {items.map((item) => {
+          const href = item.media_type === "movie" ? `/movie/${item.tmdb_id}` : `/tv/${item.tmdb_id}`;
           const posterUrl = getTMDBImageUrl(item.poster_path, "w185");
+          const pct =
+            item.duration_seconds > 0
+              ? Math.min(100, Math.round((item.progress_seconds / item.duration_seconds) * 100))
+              : 0;
+
           return (
             <Link
-              key={`${item.type}-${item.tmdb_id}`}
+              key={`${item.media_type}-${item.tmdb_id}`}
               href={href}
               className="shrink-0 w-28 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary rounded-lg"
               aria-label={`Continuar: ${item.title}`}
@@ -40,14 +59,35 @@ export default function ContinueWatchingRow() {
                   fill
                   sizes="112px"
                 />
+
                 {/* Type badge */}
                 <div className="absolute bottom-0 inset-x-0 bg-linear-to-t from-black/80 to-transparent px-2 py-1.5">
                   <span className="text-[9px] font-bold uppercase tracking-widest text-white/80">
-                    {item.type === "movie" ? "Película" : "Serie"}
+                    {item.media_type === "movie" ? "Película" : "Serie"}
                   </span>
                 </div>
+
+                {/* Play icon overlay on hover */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm">
+                    <svg className="w-5 h-5 text-white translate-x-0.5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <p className="mt-2 text-xs text-text-primary leading-snug line-clamp-2 group-hover:text-accent-hover transition-colors">
+
+              {/* Progress bar */}
+              {pct > 0 && (
+                <div className="mt-1.5 h-0.5 w-full rounded-full bg-surface-hover overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-accent-primary transition-all"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              )}
+
+              <p className="mt-1.5 text-xs text-text-primary leading-snug line-clamp-2 group-hover:text-accent-hover transition-colors">
                 {item.title}
               </p>
             </Link>

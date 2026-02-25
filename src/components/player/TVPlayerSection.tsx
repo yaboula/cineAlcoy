@@ -22,6 +22,9 @@ interface TVPlayerSectionProps {
   initialSeason: number;
   backdropUrl?: string | null;
   seriesTitle?: string;
+  posterPath?: string | null;
+  genreIds?: number[];
+  releaseYear?: number | null;
 }
 
 export default function TVPlayerSection({
@@ -31,6 +34,9 @@ export default function TVPlayerSection({
   initialSeason,
   backdropUrl,
   seriesTitle,
+  posterPath,
+  genreIds,
+  releaseYear,
 }: TVPlayerSectionProps) {
   const [currentSeason, setCurrentSeason] = useState(initialSeason);
   const [currentEpisode, setCurrentEpisode] = useState(1);
@@ -70,6 +76,9 @@ export default function TVPlayerSection({
           episode={currentEpisode}
           backdropUrl={backdropUrl}
           title={seriesTitle ? `${seriesTitle} — T${currentSeason}:E${currentEpisode}` : undefined}
+          posterPath={posterPath}
+          genreIds={genreIds}
+          releaseYear={releaseYear}
         />
 
         {/* ── Season + Episode controls ─────────────── */}
