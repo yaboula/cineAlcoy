@@ -113,7 +113,7 @@ export default function TVPlayerSection({
           <div className="space-y-1 max-h-80 overflow-y-auto pr-1 -mr-1">
             {episodes.map((ep) => {
               const isActive = ep.episode_number === currentEpisode;
-              const thumbUrl = ep.still_path ? getTMDBImageUrl(ep.still_path, "w300") : null;
+              const thumbUrl = ep.still_path ? getTMDBImageUrl(ep.still_path, "w342") : null;
 
               return (
                 <button
