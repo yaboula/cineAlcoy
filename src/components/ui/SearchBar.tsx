@@ -111,9 +111,24 @@ export default function SearchBar({
       }
       setValue("");
       setSuggestions([]);
+      clearTimeout(debounceNav.current);
+      clearTimeout(debounceSug.current);
       if (!isPage) {
         router.push("/search");
         inputRef.current?.blur();
+      }
+      return;
+    }
+
+    // Enter always navigates: selected suggestion takes priority, else full search
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (showDropdown && selectedIndex >= 0 && suggestions[selectedIndex]) {
+        navigateToItem(suggestions[selectedIndex]);
+      } else if (value.trim()) {
+        setShowDropdown(false);
+        clearTimeout(debounceNav.current);
+        router.push(`/search?q=${encodeURIComponent(value.trim())}`);
       }
       return;
     }
@@ -126,13 +141,6 @@ export default function SearchBar({
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setSelectedIndex((p) => (p > 0 ? p - 1 : suggestions.length - 1));
-    } else if (e.key === "Enter" && selectedIndex >= 0) {
-      e.preventDefault();
-      navigateToItem(suggestions[selectedIndex]);
-    } else if (e.key === "Enter" && value.trim()) {
-      e.preventDefault();
-      setShowDropdown(false);
-      router.push(`/search?q=${encodeURIComponent(value.trim())}`);
     }
   }
 
@@ -160,7 +168,7 @@ export default function SearchBar({
         showDropdown && "rounded-b-none border-b-transparent"
       )
     : cn(
-        "flex items-center gap-2 bg-surface/70 border border-border rounded-lg px-3 py-1.5",
+        "flex items-center gap-2 bg-surface/70 border border-border rounded-xl px-3 py-1.5",
         "focus-within:border-accent-primary/60 focus-within:bg-surface",
         "transition-all duration-200",
         showDropdown && "rounded-b-none border-b-transparent"
@@ -189,7 +197,8 @@ export default function SearchBar({
 
         <input
           ref={inputRef}
-          type="search"
+          type="text"
+          inputMode="search"
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
@@ -241,7 +250,7 @@ export default function SearchBar({
             transition={{ duration: 0.14, ease: "easeOut" }}
             className={cn(
               "absolute z-60 w-full bg-surface border border-border border-t-0 overflow-hidden shadow-2xl shadow-black/50",
-              isPage ? "rounded-b-2xl" : "rounded-b-lg"
+              isPage ? "rounded-b-2xl" : "rounded-b-xl"
             )}
             role="listbox"
           >
