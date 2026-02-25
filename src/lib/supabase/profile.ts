@@ -25,6 +25,7 @@ export async function getOrCreateProfile(): Promise<Profile | null> {
   if (!deviceId) return null;
 
   const supabase = createClient();
+  if (!supabase) return null;
 
   // Try to fetch existing
   const { data: existing } = await supabase
@@ -51,6 +52,7 @@ export async function updateProfile(
   changes: Partial<Pick<Profile, "display_name" | "avatar_emoji">>
 ): Promise<void> {
   const supabase = createClient();
+  if (!supabase) return;
   await supabase
     .from("profiles")
     .update({ ...changes, updated_at: new Date().toISOString() })

@@ -15,6 +15,7 @@ export async function updateStats(
   }
 ): Promise<void> {
   const supabase = createClient();
+  if (!supabase) return;
   const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
 
   const { data: current } = await supabase
@@ -62,6 +63,7 @@ export async function updateStats(
 
 export async function getStats(profileId: string): Promise<UserStats | null> {
   const supabase = createClient();
+  if (!supabase) return null;
   const { data } = await supabase
     .from("user_stats")
     .select("*")

@@ -18,6 +18,7 @@ export interface WatchlistInput {
 
 export async function addToWatchlist(input: WatchlistInput): Promise<void> {
   const supabase = createClient();
+  if (!supabase) return;
   await supabase.from("watchlist").upsert(
     {
       profile_id:   input.profileId,
@@ -40,6 +41,7 @@ export async function removeFromWatchlist(
   mediaType: MediaType
 ): Promise<void> {
   const supabase = createClient();
+  if (!supabase) return;
   await supabase
     .from("watchlist")
     .delete()
@@ -54,6 +56,7 @@ export async function isInWatchlist(
   mediaType: MediaType
 ): Promise<boolean> {
   const supabase = createClient();
+  if (!supabase) return false;
   const { data } = await supabase
     .from("watchlist")
     .select("id")
@@ -69,6 +72,7 @@ export async function getWatchlist(
   limit = 100
 ): Promise<WatchlistRow[]> {
   const supabase = createClient();
+  if (!supabase) return [];
   const { data } = await supabase
     .from("watchlist")
     .select("*")

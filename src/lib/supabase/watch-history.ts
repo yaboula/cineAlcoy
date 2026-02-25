@@ -26,6 +26,7 @@ export interface ProgressInput {
 /** Save (upsert) viewing progress. Safe to call every 10 s during playback. */
 export async function saveProgress(input: ProgressInput): Promise<void> {
   const supabase = createClient();
+  if (!supabase) return;
 
   // Fetch current row to accumulate total_watch_seconds
   const { data: existing } = await supabase
@@ -71,6 +72,7 @@ export async function getProgress(
   mediaType: MediaType
 ): Promise<Pick<WatchHistoryRow, "progress_seconds" | "duration_seconds" | "completed" | "season_number" | "episode_number"> | null> {
   const supabase = createClient();
+  if (!supabase) return null;
   const { data } = await supabase
     .from("watch_history")
     .select("progress_seconds, duration_seconds, completed, season_number, episode_number")
@@ -88,6 +90,7 @@ export async function getWatchHistory(
   limit = 40
 ): Promise<WatchHistoryRow[]> {
   const supabase = createClient();
+  if (!supabase) return [];
   const { data } = await supabase
     .from("watch_history")
     .select("*")
@@ -104,6 +107,7 @@ export async function getContinueWatching(
   limit = 20
 ): Promise<WatchHistoryRow[]> {
   const supabase = createClient();
+  if (!supabase) return [];
   const { data } = await supabase
     .from("watch_history")
     .select("*")
@@ -123,6 +127,7 @@ export async function removeFromHistory(
   mediaType: MediaType
 ): Promise<void> {
   const supabase = createClient();
+  if (!supabase) return;
   await supabase
     .from("watch_history")
     .delete()

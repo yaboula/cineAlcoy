@@ -15,6 +15,7 @@ export async function recordGenres(
 ): Promise<void> {
   if (!genreIds.length) return;
   const supabase = createClient();
+  if (!supabase) return;
 
   for (const genreId of genreIds) {
     const name = genreNames[genreId] ?? `Genre ${genreId}`;
@@ -51,6 +52,7 @@ export async function getTopGenres(
   limit = 5
 ): Promise<GenrePreference[]> {
   const supabase = createClient();
+  if (!supabase) return [];
   const { data } = await supabase
     .from("genre_preferences")
     .select("*")
@@ -63,6 +65,7 @@ export async function getTopGenres(
 /** Returns genre_ids sorted by preference score (watch + 2×completed) */
 export async function getPreferredGenreIds(profileId: string): Promise<number[]> {
   const supabase = createClient();
+  if (!supabase) return [];
   const { data } = await supabase
     .from("genre_preferences")
     .select("genre_id, watch_count, completed_count")
@@ -79,6 +82,7 @@ export async function getPreferredGenreIds(profileId: string): Promise<number[]>
 /** Regenerate genre preferences from scratch using existing watch_history */
 export async function rebuildGenrePreferences(profileId: string): Promise<void> {
   const supabase = createClient();
+  if (!supabase) return;
   const { data: history } = await supabase
     .from("watch_history")
     .select("genre_ids, completed")
