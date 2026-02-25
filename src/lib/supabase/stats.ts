@@ -67,7 +67,7 @@ export async function getStats(profileId: string): Promise<UserStats | null> {
     .select("*")
     .eq("profile_id", profileId)
     .single();
-  return (data as UserStats) ?? null;
+  return (data as unknown as UserStats) ?? null;
 }
 
 /** Human-readable helpers */

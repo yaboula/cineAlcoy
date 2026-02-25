@@ -9,7 +9,6 @@ import { useProfile } from "./useProfile";
 import { getTopGenres, getPreferredGenreIds } from "@/lib/supabase/genres";
 import { getContinueWatching, getWatchHistory } from "@/lib/supabase/watch-history";
 import type { GenrePreference } from "@/lib/supabase/types";
-import type { MediaItem } from "@/types";
 
 interface SmartSuggestionsResult {
   topGenres: GenrePreference[];
@@ -42,7 +41,7 @@ export function useSmartSuggestions(): SmartSuggestionsResult {
       setWatchedIds(new Set(history.map((h) => h.tmdb_id)));
       setCWCount(cw.length);
     }).finally(() => setLoading(false));
-  }, [profile?.id]);
+  }, [profile]);
 
   return { topGenres, preferredGenreIds, watchedIds, continueWatchingCount, loading };
 }

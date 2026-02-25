@@ -66,8 +66,12 @@ export function useWatchlist() {
   }, [profile]);
 
   useEffect(() => {
-    reload();
-  }, [reload]);
+    if (!profile) { setLoading(false); return; }
+    getWatchlist(profile.id).then((data) => {
+      setItems(data);
+      setLoading(false);
+    });
+  }, [profile]);
 
   return { items, loading, reload };
 }

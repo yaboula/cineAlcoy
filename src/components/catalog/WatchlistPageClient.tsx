@@ -85,7 +85,7 @@ export default function WatchlistPageClient() {
                   />
 
                   {/* Overlay with media type badge */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent" />
                   <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
                     {item.media_type === "movie"
                       ? <Film className="w-3 h-3 text-white/80" />
