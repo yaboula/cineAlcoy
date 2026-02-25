@@ -13,6 +13,7 @@ import { Film } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import SearchBar from "@/components/ui/SearchBar";
+import { Search } from "lucide-react";
 
 const NAV_LINKS = [
   { label: "Películas", href: "/movies" },
@@ -21,6 +22,7 @@ const NAV_LINKS = [
 
 export default function Header() {
   const pathname = usePathname();
+  const isSearchPage = pathname.startsWith("/search");
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -88,19 +90,23 @@ export default function Header() {
         {/* ── Spacer ────────────────────────────── */}
         <div className="flex-1" />
 
-        {/* ── SearchBar (desktop: full; mobile: icon link to /search) ── */}
-        <Suspense fallback={null}>
-          <SearchBar className="hidden md:block w-56 lg:w-72" />
-        </Suspense>
-        <Link
-          href="/search"
-          className="md:hidden p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
-          aria-label="Ir a búsqueda"
-        >
-          <motion.span whileTap={{ scale: 0.9 }} className="block">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          </motion.span>
-        </Link>
+        {/* ── Compact SearchBar (hidden on /search — the page has its own) ── */}
+        {!isSearchPage && (
+          <>
+            <Suspense fallback={null}>
+              <SearchBar variant="compact" className="hidden md:block w-48 lg:w-64" />
+            </Suspense>
+            <Link
+              href="/search"
+              className="md:hidden p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+              aria-label="Ir a búsqueda"
+            >
+              <motion.span whileTap={{ scale: 0.9 }} className="block">
+                <Search className="w-5 h-5" aria-hidden />
+              </motion.span>
+            </Link>
+          </>
+        )}
       </div>
     </motion.header>
   );

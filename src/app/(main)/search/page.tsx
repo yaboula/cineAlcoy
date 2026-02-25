@@ -60,9 +60,8 @@ export default async function SearchPage({ searchParams }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-16">
+    <div className="min-h-screen pt-20 pb-16">
       <div className="mx-auto max-w-7xl px-4 lg:px-12">
-        <h1 className="text-2xl font-bold text-text-primary mb-6">Buscar</h1>
         <SearchPageClient
           initialItems={initialItems}
           initialTotal={initialTotal}

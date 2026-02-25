@@ -5,7 +5,8 @@
 // and results display with Server Action for data
 // ──────────────────────────────────────────────────
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
+import SearchBar from "@/components/ui/SearchBar";
 import MediaGrid from "@/components/catalog/MediaGrid";
 import SearchResultCount from "@/components/catalog/SearchResultCount";
 import EmptySearchState from "@/components/catalog/EmptySearchState";
@@ -81,7 +82,14 @@ export default function SearchPageClient({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* ── Hero search input ──────────────────── */}
+      <div className="max-w-2xl mx-auto">
+        <Suspense fallback={null}>
+          <SearchBar variant="page" autoFocus={!query} className="w-full" />
+        </Suspense>
+      </div>
+
       {query ? (
         <>
           {/* Result count */}
