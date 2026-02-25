@@ -47,10 +47,11 @@ export default function SearchBar({
 
   const isPage = variant === "page";
 
-  // Sync value when URL changes (back/forward)  don't close while focused
+  // Sync value with URL only when the input is NOT focused.
+  // If the user is actively typing we must NOT overwrite their in-progress text.
   useEffect(() => {
-    setValue(searchParams.get("q") ?? "");
     if (document.activeElement !== inputRef.current) {
+      setValue(searchParams.get("q") ?? "");
       setShowDropdown(false);
     }
   }, [searchParams]);
@@ -162,20 +163,23 @@ export default function SearchBar({
   //  Variant styles 
   const wrapperClass = isPage
     ? cn(
-        "flex items-center gap-3 bg-surface/80 backdrop-blur-sm border border-border/60 rounded-2xl px-5 py-4",
+        "flex items-center gap-3 bg-surface/80 backdrop-blur-sm border border-border/60 rounded-2xl px-5 py-4 overflow-hidden",
         "focus-within:border-accent-primary/50 focus-within:bg-surface focus-within:shadow-xl focus-within:shadow-accent-primary/10",
         "transition-all duration-300",
         showDropdown && "rounded-b-none border-b-transparent"
       )
     : cn(
-        "flex items-center gap-2 bg-surface/70 border border-border rounded-xl px-3 py-1.5",
+        "flex items-center gap-2 bg-surface/70 border border-border rounded-2xl px-3 py-1.5 overflow-hidden",
         "focus-within:border-accent-primary/60 focus-within:bg-surface",
         "transition-all duration-200",
         showDropdown && "rounded-b-none border-b-transparent"
       );
 
   return (
-    <div ref={containerRef} className={cn("relative", className)}>
+    <div
+      ref={containerRef}
+      className={cn("relative", className)}
+    >
       <div className={wrapperClass} role="search">
         {isLoading ? (
           <Loader2
@@ -250,7 +254,7 @@ export default function SearchBar({
             transition={{ duration: 0.14, ease: "easeOut" }}
             className={cn(
               "absolute z-60 w-full bg-surface border border-border border-t-0 overflow-hidden shadow-2xl shadow-black/50",
-              isPage ? "rounded-b-2xl" : "rounded-b-xl"
+              "rounded-b-2xl"
             )}
             role="listbox"
           >

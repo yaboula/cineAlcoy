@@ -40,6 +40,13 @@ export default function SearchPageClient({
   const [isLoading, setIsLoading] = useState(false);
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
 
+  // When the server returns fresh results (new query via router.push / Enter),
+  // sync the client state — useState initial value is only read on first mount.
+  useEffect(() => {
+    setItems(initialItems);
+    setCurrentPage(1);
+  }, [initialItems, query]);
+
   // Save search query to history when results load
   useEffect(() => {
     if (query) saveSearchQuery(query);
