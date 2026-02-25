@@ -9,6 +9,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import ImageWithFallback from "@/components/ui/ImageWithFallback";
 import RatingBadge from "@/components/ui/RatingBadge";
+import WatchlistButton from "@/components/ui/WatchlistButton";
 import { getTMDBImageUrl } from "@/lib/utils";
 import type { MediaItem } from "@/types";
 import { getMediaTitle, getMediaYear } from "@/types";
@@ -64,6 +65,20 @@ export default function MediaCard({ item }: MediaCardProps) {
             <span className="text-[10px] font-bold uppercase tracking-widest bg-accent-primary/90 text-white px-1.5 py-0.5 rounded-sm">
               {item.media_type === "movie" ? "Película" : "Serie"}
             </span>
+          </div>
+
+          {/* Watchlist icon — bottom-right, visible on hover */}
+          <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <WatchlistButton
+              variant="icon"
+              tmdbId={item.id}
+              mediaType={item.media_type as "movie" | "tv"}
+              title={title}
+              posterPath={item.poster_path}
+              backdropPath={item.backdrop_path}
+              genreIds={item.genre_ids}
+              releaseYear={year ? parseInt(year) : null}
+            />
           </div>
         </div>
 

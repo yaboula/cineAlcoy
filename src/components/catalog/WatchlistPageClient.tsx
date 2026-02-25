@@ -9,6 +9,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bookmark, BookmarkX, Film, Tv } from "lucide-react";
 import ImageWithFallback from "@/components/ui/ImageWithFallback";
+import UserStatsPanel from "@/components/ui/UserStatsPanel";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { getTMDBImageUrl } from "@/lib/utils";
 import type { WatchlistRow } from "@/lib/supabase/types";
@@ -27,17 +28,22 @@ export default function WatchlistPageClient() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pt-6">
+      <>
+        <UserStatsPanel className="mb-8" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pt-6">
         {Array.from({ length: 12 }).map((_, i) => (
           <div key={i} className="aspect-2/3 rounded-xl bg-surface-hover animate-pulse" />
         ))}
       </div>
+      </>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center text-center py-24 gap-4">
+      <>
+        <UserStatsPanel className="mb-8" />
+        <div className="flex flex-col items-center justify-center text-center py-24 gap-4">
         <Bookmark className="w-12 h-12 text-text-muted opacity-40" />
         <p className="text-text-secondary text-lg">Tu lista está vacía.</p>
         <p className="text-text-muted text-sm max-w-xs">
@@ -50,11 +56,14 @@ export default function WatchlistPageClient() {
           Explorar contenido
         </Link>
       </div>
+      </>
     );
   }
 
   return (
-    <AnimatePresence initial={false} mode="popLayout">
+    <>
+      <UserStatsPanel className="mb-8" />
+      <AnimatePresence initial={false} mode="popLayout">
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pt-6">
         {items.map((item) => {
           const href = item.media_type === "movie" ? `/movie/${item.tmdb_id}` : `/tv/${item.tmdb_id}`;
@@ -121,5 +130,6 @@ export default function WatchlistPageClient() {
         })}
       </div>
     </AnimatePresence>
+    </>
   );
 }

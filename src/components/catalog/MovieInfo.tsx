@@ -12,9 +12,10 @@ import type { MovieDetail } from "@/types";
 
 interface MovieInfoProps {
   movie: MovieDetail;
+  actions?: React.ReactNode;
 }
 
-export default function MovieInfo({ movie }: MovieInfoProps) {
+export default function MovieInfo({ movie, actions }: MovieInfoProps) {
   const posterUrl = getTMDBImageUrl(movie.poster_path, "w500");
   const year = movie.release_date?.substring(0, 4);
 
@@ -79,6 +80,9 @@ export default function MovieInfo({ movie }: MovieInfoProps) {
             <p className="text-sm text-text-secondary leading-7">{movie.overview}</p>
           </div>
         )}
+
+        {/* Action buttons */}
+        {actions && <div className="flex flex-wrap gap-3 pt-1">{actions}</div>}
 
         {/* Additional info */}
         <div className="grid grid-cols-2 gap-x-8 gap-y-2 pt-2 text-xs text-text-muted border-t border-border/50">

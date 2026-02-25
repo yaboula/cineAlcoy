@@ -17,6 +17,7 @@ import CastCarousel from "@/components/catalog/CastCarousel";
 import RecommendationsGrid from "@/components/catalog/RecommendationsGrid";
 import TVPlayerSection from "@/components/player/TVPlayerSection";
 import WatchHistorySaver from "@/components/player/WatchHistorySaver";
+import WatchlistButton from "@/components/ui/WatchlistButton";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -90,7 +91,21 @@ export default async function TVPage({ params }: PageProps) {
       <MovieHero movie={heroData} />
 
       <div className="mx-auto max-w-7xl px-4 lg:px-12 -mt-16 relative z-10 space-y-12 pb-4">
-        <TVShowInfo show={show} />
+        <TVShowInfo
+          show={show}
+          actions={
+            <WatchlistButton
+              variant="pill"
+              tmdbId={show.id}
+              mediaType="tv"
+              title={show.name}
+              posterPath={show.poster_path}
+              backdropPath={show.backdrop_path}
+              genreIds={show.genres.map((g) => g.id)}
+              releaseYear={show.first_air_date ? new Date(show.first_air_date).getFullYear() : null}
+            />
+          }
+        />
         {credits.cast.length > 0 && <CastCarousel cast={credits.cast} />}
       </div>
 

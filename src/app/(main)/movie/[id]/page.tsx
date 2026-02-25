@@ -22,6 +22,7 @@ import CastCarousel from "@/components/catalog/CastCarousel";
 import RecommendationsGrid from "@/components/catalog/RecommendationsGrid";
 import VideoPlayer from "@/components/player/VideoPlayer";
 import WatchHistorySaver from "@/components/player/WatchHistorySaver";
+import WatchlistButton from "@/components/ui/WatchlistButton";
 
 // ── Props type ────────────────────────────────────
 interface PageProps {
@@ -80,7 +81,21 @@ export default async function MoviePage({ params }: PageProps) {
 
       {/* ── Info section ────────────────────────── */}
       <div className="mx-auto max-w-7xl px-4 lg:px-12 -mt-16 relative z-10 space-y-12 pb-4">
-        <MovieInfo movie={movie} />
+        <MovieInfo
+          movie={movie}
+          actions={
+            <WatchlistButton
+              variant="pill"
+              tmdbId={movie.id}
+              mediaType="movie"
+              title={movie.title}
+              posterPath={movie.poster_path}
+              backdropPath={movie.backdrop_path}
+              genreIds={movie.genres.map((g) => g.id)}
+              releaseYear={movie.release_date ? new Date(movie.release_date).getFullYear() : null}
+            />
+          }
+        />
 
         {/* ── Cast ──────────────────────────────── */}
         {credits.cast.length > 0 && <CastCarousel cast={credits.cast} />}

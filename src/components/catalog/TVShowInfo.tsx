@@ -11,9 +11,10 @@ import type { TVShowDetail } from "@/types";
 
 interface TVShowInfoProps {
   show: TVShowDetail;
+  actions?: React.ReactNode;
 }
 
-export default function TVShowInfo({ show }: TVShowInfoProps) {
+export default function TVShowInfo({ show, actions }: TVShowInfoProps) {
   const posterUrl = getTMDBImageUrl(show.poster_path, "w500");
   const year = show.first_air_date?.substring(0, 4);
   const isOngoing = show.status === "Returning Series";
@@ -89,6 +90,9 @@ export default function TVShowInfo({ show }: TVShowInfoProps) {
             <p className="text-sm text-text-secondary leading-7">{show.overview}</p>
           </div>
         )}
+
+        {/* Action buttons */}
+        {actions && <div className="flex flex-wrap gap-3 pt-1">{actions}</div>}
       </div>
     </div>
   );
