@@ -39,10 +39,14 @@ export default function SearchBar({
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Sync value when URL query changes (browser back/forward)
+  // Sync value when URL query changes (browser back/forward).
+  // Do NOT close the dropdown while the input is focused — that would kill
+  // suggestions the instant the debounce pushes the new URL.
   useEffect(() => {
     setValue(searchParams.get("q") ?? "");
-    setShowDropdown(false);
+    if (document.activeElement !== inputRef.current) {
+      setShowDropdown(false);
+    }
   }, [searchParams]);
 
   // Close dropdown on click outside

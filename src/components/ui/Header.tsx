@@ -6,12 +6,13 @@
 // and framer-motion animated entry
 // ──────────────────────────────────────────────────
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Film, Search, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { usePathname } from "next/navigation";
+import { Film } from "lucide-react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import SearchBar from "@/components/ui/SearchBar";
 
 const NAV_LINKS = [
   { label: "Películas", href: "/movies" },
@@ -20,30 +21,13 @@ const NAV_LINKS = [
 
 export default function Header() {
   const pathname = usePathname();
-  const router = useRouter();
-  const isSearchPage = pathname.startsWith("/search");
   const [scrolled, setScrolled] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  function handleSearchSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const q = searchQuery.trim();
-    if (q) router.push(`/search?q=${encodeURIComponent(q)}`);
-  }
-
-  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Escape") {
-      setSearchQuery("");
-      searchRef.current?.blur();
-    }
-  }
 
   return (
     <motion.header
@@ -104,54 +88,19 @@ export default function Header() {
         {/* ── Spacer ────────────────────────────── */}
         <div className="flex-1" />
 
-        {/* ── Desktop SearchBar (hidden on /search) ─── */}
-        {!isSearchPage && (
-        <form
-          onSubmit={handleSearchSubmit}
-          className="hidden md:flex items-center gap-2 bg-surface/70 border border-border rounded-lg px-3 py-1.5 w-56 lg:w-72 focus-within:border-accent-primary/60 focus-within:bg-surface transition-all duration-200"
-          role="search"
-        >
-          <Search className="w-4 h-4 text-text-muted shrink-0" aria-hidden />
-          <input
-            ref={searchRef}
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleSearchKeyDown}
-            placeholder="Buscar películas o series..."
-            className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none"
-            aria-label="Buscar películas o series"
-          />
-          <AnimatePresence>
-            {searchQuery && (
-              <motion.button
-                key="clear"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.1 }}
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="text-text-muted hover:text-text-primary transition-colors"
-                aria-label="Limpiar búsqueda"
-              >
-                <X className="w-3.5 h-3.5" />
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </form>
-        )}
-
-        {/* ── Mobile: Search Icon (hidden on /search) ── */}
-        {!isSearchPage && (
+        {/* ── SearchBar (desktop: full; mobile: icon link to /search) ── */}
+        <Suspense fallback={null}>
+          <SearchBar className="hidden md:block w-56 lg:w-72" />
+        </Suspense>
         <Link
           href="/search"
           className="md:hidden p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
           aria-label="Ir a búsqueda"
         >
-          <Search className="w-5 h-5" />
+          <motion.span whileTap={{ scale: 0.9 }} className="block">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </motion.span>
         </Link>
-        )}
       </div>
     </motion.header>
   );

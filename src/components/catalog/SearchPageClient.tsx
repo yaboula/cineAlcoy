@@ -6,8 +6,6 @@
 // ──────────────────────────────────────────────────
 
 import { useState, useMemo, useEffect } from "react";
-import { Suspense } from "react";
-import SearchBar from "@/components/ui/SearchBar";
 import MediaGrid from "@/components/catalog/MediaGrid";
 import SearchResultCount from "@/components/catalog/SearchResultCount";
 import EmptySearchState from "@/components/catalog/EmptySearchState";
@@ -84,11 +82,6 @@ export default function SearchPageClient({
 
   return (
     <div className="space-y-6">
-      {/* Search bar with URL sync */}
-      <Suspense>
-        <SearchBar autoFocus className="w-full" />
-      </Suspense>
-
       {query ? (
         <>
           {/* Result count */}
