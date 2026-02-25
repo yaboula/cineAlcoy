@@ -100,7 +100,7 @@ export default async function TVPage({ params }: PageProps) {
         seasons={show.seasons}
         initialEpisodes={initialEpisodes}
         initialSeason={firstSeason?.season_number ?? 1}
-        backdropUrl={show.backdrop_path ? getTMDBImageUrl(show.backdrop_path, "w1280") : null}
+        backdropUrl={show.backdrop_path ? getTMDBImageUrl(show.backdrop_path, "w780") : null}
         seriesTitle={show.name}
       />
 

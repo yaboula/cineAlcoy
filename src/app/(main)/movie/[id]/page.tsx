@@ -91,7 +91,7 @@ export default async function MoviePage({ params }: PageProps) {
         <VideoPlayer
           tmdbId={movie.id}
           type="movie"
-          backdropUrl={movie.backdrop_path ? getTMDBImageUrl(movie.backdrop_path, "w1280") : null}
+          backdropUrl={movie.backdrop_path ? getTMDBImageUrl(movie.backdrop_path, "w780") : null}
           title={movie.title}
         />
       </section>
