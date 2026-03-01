@@ -31,9 +31,19 @@ export default function ProfileDashboardClient() {
   const [history, setHistory] = useState<WatchHistoryRow[]>([]);
   const [topGenres, setTopGenres] = useState<GenrePreference[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dataError, setDataError] = useState(false);
 
   useEffect(() => {
-    if (profileLoading || !ctxProfile) return;
+    // Still waiting for profile
+    if (profileLoading) return;
+
+    // Profile failed to load (no Supabase / env vars missing)
+    if (!ctxProfile) {
+      setLoading(false);
+      setDataError(true);
+      return;
+    }
+
     setProfile(ctxProfile);
 
     Promise.all([
@@ -46,6 +56,7 @@ export default function ProfileDashboardClient() {
         setHistory(h);
         setTopGenres(g);
       })
+      .catch(() => setDataError(true))
       .finally(() => setLoading(false));
   }, [ctxProfile, profileLoading]);
 
@@ -64,6 +75,25 @@ export default function ProfileDashboardClient() {
     },
     []
   );
+
+  // ── Error state ──
+  if (!loading && (dataError || !profile)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+        <span className="text-5xl">⚠️</span>
+        <p className="text-text-primary font-medium text-lg">No se pudo cargar el perfil</p>
+        <p className="text-text-secondary text-sm max-w-xs">
+          Comprueba que las variables de entorno de Supabase están configuradas y recarga la página.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-2 px-5 py-2 rounded-lg bg-accent-primary text-white text-sm font-medium hover:bg-accent-primary/80 transition-colors"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
+  }
 
   // ── Loading state ──
   if (profileLoading || loading || !profile) {
