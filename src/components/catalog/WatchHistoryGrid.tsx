@@ -92,11 +92,20 @@ export default function WatchHistoryGrid({ items, profileId, onRemove }: WatchHi
       <AnimatePresence initial={false} mode="popLayout">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
           {filtered.map((item) => {
-            const href = item.media_type === "movie" ? `/movie/${item.tmdb_id}` : `/tv/${item.tmdb_id}`;
+            const href =
+              item.media_type === "movie"
+                ? `/movie/${item.tmdb_id}`
+                : `/tv/${item.tmdb_id}`;
             const posterUrl = getTMDBImageUrl(item.poster_path, "w342");
             const pct = item.duration_seconds > 0
               ? Math.min(100, Math.round((item.progress_seconds / item.duration_seconds) * 100))
               : 0;
+
+            // Episode badge label for TV
+            const epLabel =
+              item.media_type === "tv" && item.season_number && item.episode_number
+                ? `T${item.season_number}:E${item.episode_number}`
+                : null;
 
             return (
               <motion.div
@@ -123,15 +132,15 @@ export default function WatchHistoryGrid({ items, profileId, onRemove }: WatchHi
                     />
 
                     {/* Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent" />
 
-                    {/* Media type badge */}
+                    {/* Media type + episode badge */}
                     <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
                       {item.media_type === "movie"
                         ? <Film className="w-3 h-3 text-white/80" />
                         : <Tv className="w-3 h-3 text-white/80" />}
                       <span className="text-[9px] font-bold uppercase tracking-widest text-white/80">
-                        {item.media_type === "movie" ? "Película" : "Serie"}
+                        {epLabel ?? (item.media_type === "movie" ? "Película" : "Serie")}
                       </span>
                     </div>
 

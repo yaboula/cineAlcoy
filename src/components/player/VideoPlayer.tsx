@@ -21,6 +21,15 @@ import { cn } from "@/lib/utils";
 import PlayerDisclaimer from "@/components/ui/PlayerDisclaimer";
 import { useWatchProgress } from "@/hooks/useWatchProgress";
 
+/** Format seconds as "1h 23m" or "12:34" */
+function formatResumeTime(secs: number): string {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = Math.floor(secs % 60);
+  if (h > 0) return `${h}h ${m.toString().padStart(2, "0")}m`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 // ── Sources ──────────────────────────────────────
 interface PlayerSource {
   id: string;
@@ -69,15 +78,19 @@ interface VideoPlayerProps {
   genreIds?: number[];
   releaseYear?: number | null;
   durationSeconds?: number;
+  // TV only — forwarded to useWatchProgress
+  seasonNumber?: number | null;
+  episodeNumber?: number | null;
+  episodeTitle?: string | null;
 }
 
 // ── Component ────────────────────────────────────
-export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl, posterPath, title, genreIds, releaseYear, durationSeconds }: VideoPlayerProps) {
+export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl, posterPath, title, genreIds, releaseYear, durationSeconds, seasonNumber, episodeNumber, episodeTitle }: VideoPlayerProps) {
   const s = season ?? 1;
   const e = episode ?? 1;
 
   // ── Watch progress (elapsed-time based for iframe players) ──
-  const { saveProgress } = useWatchProgress({
+  const { resumeFrom, saveProgress } = useWatchProgress({
     tmdbId,
     mediaType: type,
     title:           title ?? "",
@@ -86,11 +99,22 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
     genreIds:        genreIds ?? [],
     releaseYear:     releaseYear,
     durationSeconds: durationSeconds ?? 0,
+    seasonNumber:    seasonNumber,
+    episodeNumber:   episodeNumber,
+    episodeTitle:    episodeTitle,
   });
 
   const elapsedRef  = useRef(0);
   const timerRef    = useRef<ReturnType<typeof setInterval>>(undefined);
   const hasSavedRef = useRef(false);
+
+  // When resumeFrom loads, initialise the elapsed counter so progress
+  // continues from where the user left off instead of starting at 0.
+  useEffect(() => {
+    if (resumeFrom > 0) {
+      elapsedRef.current = resumeFrom;
+    }
+  }, [resumeFrom]);
 
   // Start as false so the iframe is always visible in Brave
   // (Brave may suppress cross-origin onLoad events)
@@ -115,6 +139,16 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
   const iframeKey = `${sourceId}-${tmdbId}-${s}-${e}`;
   const iframeSrc = active.buildUrl(tmdbId, type, s, e);
   const hasStarted = startedKey === iframeKey;
+
+  // Reset elapsed/saved refs when the content changes (e.g. new episode)
+  const prevKeyRef = useRef(iframeKey);
+  useEffect(() => {
+    if (prevKeyRef.current !== iframeKey) {
+      prevKeyRef.current = iframeKey;
+      elapsedRef.current = resumeFrom > 0 ? resumeFrom : 0;
+      hasSavedRef.current = false;
+    }
+  }, [iframeKey, resumeFrom]);
 
   // Start elapsed timer once the user presses play, save every 30 s
   useEffect(() => {
@@ -243,7 +277,13 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
                 {title && (
                   <p className="text-white/80 text-sm font-medium">{title}</p>
                 )}
-                <p className="text-white/50 text-xs">Pulsa para reproducir</p>
+                {resumeFrom > 30 ? (
+                  <p className="text-accent-primary text-xs font-medium">
+                    Continuar desde {formatResumeTime(resumeFrom)}
+                  </p>
+                ) : (
+                  <p className="text-white/50 text-xs">Pulsa para reproducir</p>
+                )}
               </div>
             </button>
           ) : (

@@ -40,12 +40,22 @@ export default function ContinueWatchingRow() {
       </h2>
       <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border">
         {items.map((item) => {
-          const href = item.media_type === "movie" ? `/movie/${item.tmdb_id}` : `/tv/${item.tmdb_id}`;
+          // TV: deep-link to the series page (player auto-selects latest episode)
+          const href =
+            item.media_type === "movie"
+              ? `/movie/${item.tmdb_id}`
+              : `/tv/${item.tmdb_id}`;
           const posterUrl = getTMDBImageUrl(item.poster_path, "w185");
           const pct =
             item.duration_seconds > 0
               ? Math.min(100, Math.round((item.progress_seconds / item.duration_seconds) * 100))
               : 0;
+
+          // Episode badge label for TV
+          const epLabel =
+            item.media_type === "tv" && item.season_number && item.episode_number
+              ? `T${item.season_number}:E${item.episode_number}`
+              : null;
 
           return (
             <Link
@@ -62,10 +72,10 @@ export default function ContinueWatchingRow() {
                   sizes="112px"
                 />
 
-                {/* Type badge */}
+                {/* Type / episode badge */}
                 <div className="absolute bottom-0 inset-x-0 bg-linear-to-t from-black/80 to-transparent px-2 py-1.5">
                   <span className="text-[9px] font-bold uppercase tracking-widest text-white/80">
-                    {item.media_type === "movie" ? "Película" : "Serie"}
+                    {epLabel ?? (item.media_type === "movie" ? "Película" : "Serie")}
                   </span>
                 </div>
 
@@ -92,6 +102,11 @@ export default function ContinueWatchingRow() {
               <p className="mt-1.5 text-xs text-text-primary leading-snug line-clamp-2 group-hover:text-accent-hover transition-colors">
                 {item.title}
               </p>
+              {epLabel && item.episode_title && (
+                <p className="text-[10px] text-text-muted leading-snug line-clamp-1 mt-0.5">
+                  {item.episode_title}
+                </p>
+              )}
             </Link>
           );
         })}

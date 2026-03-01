@@ -67,6 +67,9 @@ export default function TVPlayerSection({
   // Only show actual seasons (season_number > 0) + Specials if present
   const displaySeasons = seasons.filter((s) => s.episode_count > 0);
 
+  // Current episode object — for runtime & name
+  const currentEp = episodes.find((ep) => ep.episode_number === currentEpisode) ?? null;
+
   return (
     <div className="bg-black py-8">
       <div className="mx-auto max-w-5xl px-0 md:px-4 space-y-6">
@@ -81,6 +84,10 @@ export default function TVPlayerSection({
           posterPath={posterPath}
           genreIds={genreIds}
           releaseYear={releaseYear}
+          durationSeconds={currentEp?.runtime ? currentEp.runtime * 60 : undefined}
+          seasonNumber={currentSeason}
+          episodeNumber={currentEpisode}
+          episodeTitle={currentEp?.name}
         />
 
         {/* ── Season + Episode controls ─────────────── */}

@@ -44,12 +44,23 @@ export function useWatchProgress(opts: UseWatchProgressOptions) {
     if (!profile) return;
     getProgress(profile.id, opts.tmdbId, opts.mediaType).then((row) => {
       if (row && !row.completed && row.progress_seconds > 30) {
+        // For TV: only resume if we're on the SAME episode that was saved.
+        // Otherwise the user switched episodes and we shouldn't resume.
+        if (
+          opts.mediaType === "tv" &&
+          (row.season_number !== (opts.seasonNumber ?? null) ||
+           row.episode_number !== (opts.episodeNumber ?? null))
+        ) {
+          // Different episode — don't resume, but mark as loaded
+          setLoadedProgress(true);
+          return;
+        }
         setResumeFrom(row.progress_seconds);
       }
       setLoadedProgress(true);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.id, opts.tmdbId, opts.mediaType]);
+  }, [profile?.id, opts.tmdbId, opts.mediaType, opts.seasonNumber, opts.episodeNumber]);
 
   const saveProgress = useCallback(
     async (currentSeconds: number, completed = false) => {
@@ -90,7 +101,7 @@ export function useWatchProgress(opts: UseWatchProgressOptions) {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [profile?.id, opts.tmdbId, opts.mediaType]
+    [profile?.id, opts.tmdbId, opts.mediaType, opts.seasonNumber, opts.episodeNumber]
   );
 
   return { resumeFrom, loadedProgress, saveProgress };
