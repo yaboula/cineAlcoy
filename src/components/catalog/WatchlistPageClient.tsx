@@ -14,10 +14,10 @@ import { useWatchlist } from "@/hooks/useWatchlist";
 import { getTMDBImageUrl } from "@/lib/utils";
 import type { WatchlistRow } from "@/lib/supabase/types";
 import { removeFromWatchlist } from "@/lib/supabase/watchlist";
-import { useProfile } from "@/hooks/useProfile";
+import { useProfileContext } from "@/components/providers/ProfileProvider";
 
 export default function WatchlistPageClient() {
-  const { profile } = useProfile();
+  const { profile } = useProfileContext();
   const { items, loading, reload } = useWatchlist();
 
   async function handleRemove(item: WatchlistRow) {

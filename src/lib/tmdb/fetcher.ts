@@ -1,5 +1,7 @@
+import "server-only";
+
 // ──────────────────────────────────────────────────
-// Cinema App — TMDB Base Fetcher
+// Cinema App — TMDB Base Fetcher (server-only)
 // ──────────────────────────────────────────────────
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";

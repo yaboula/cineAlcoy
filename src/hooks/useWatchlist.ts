@@ -55,21 +55,23 @@ export function useWatchlistStatus(tmdbId: number, mediaType: MediaType) {
 export function useWatchlist() {
   const { profile } = useProfile();
   const [items, setItems] = useState<WatchlistRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Derive loading state: if profile exists but we haven't fetched for it yet, we're loading
+  const [fetchedForProfile, setFetchedForProfile] = useState<string | null>(null);
+  const loading = profile != null && fetchedForProfile !== profile.id;
 
   const reload = useCallback(async () => {
     if (!profile) return;
-    setLoading(true);
+    setFetchedForProfile(null); // triggers loading=true via derivation
     const data = await getWatchlist(profile.id);
     setItems(data);
-    setLoading(false);
+    setFetchedForProfile(profile.id);
   }, [profile]);
 
   useEffect(() => {
-    if (!profile) { setLoading(false); return; }
+    if (!profile) return;
     getWatchlist(profile.id).then((data) => {
       setItems(data);
-      setLoading(false);
+      setFetchedForProfile(profile.id);
     });
   }, [profile]);
 

@@ -38,6 +38,7 @@ export default function SearchPageClient({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages] = useState(initialTotalPages);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
 
   // When the server returns fresh results (new query via router.push / Enter),
@@ -61,13 +62,14 @@ export default function SearchPageClient({
   async function loadMore() {
     if (isLoading || currentPage >= totalPages) return;
     setIsLoading(true);
+    setLoadError(false);
     try {
       const nextPage = currentPage + 1;
       const data = await searchMoreResults(query, nextPage);
       setItems((prev) => [...prev, ...data.items]);
       setCurrentPage(nextPage);
     } catch {
-      // Silently fail
+      setLoadError(true);
     } finally {
       setIsLoading(false);
     }
@@ -116,11 +118,24 @@ export default function SearchPageClient({
             <>
               <MediaGrid items={filteredItems} />
               {mediaFilter === "all" && (
-                <LoadMoreButton
-                  onClick={loadMore}
-                  isLoading={isLoading}
-                  hasMore={currentPage < totalPages}
-                />
+                <>
+                  <LoadMoreButton
+                    onClick={loadMore}
+                    isLoading={isLoading}
+                    hasMore={currentPage < totalPages}
+                  />
+                  {loadError && (
+                    <p className="text-center text-sm text-destructive py-2 animate-fadeIn">
+                      Error al cargar más resultados.{" "}
+                      <button
+                        onClick={loadMore}
+                        className="underline underline-offset-2 hover:text-destructive/80 transition-colors"
+                      >
+                        Reintentar
+                      </button>
+                    </p>
+                  )}
+                </>
               )}
             </>
           ) : items.length > 0 ? (

@@ -6,7 +6,14 @@
 import { createClient } from "./client";
 import type { GenrePreference } from "./types";
 
-/** Call this whenever something is added to watch history */
+/**
+ * Call this whenever something is added to watch history.
+ *
+ * R2 fix: replaced the per-genre SELECT+UPDATE loop (N+1 problem, 4-8 round
+ * trips for 4 genres) with a single SELECT + a single batch UPSERT.
+ * Also eliminates the race condition where two concurrent writes to the
+ * same genre could both read the old count and only increment by 1.
+ */
 export async function recordGenres(
   profileId: string,
   genreIds: number[],
@@ -17,33 +24,33 @@ export async function recordGenres(
   const supabase = createClient();
   if (!supabase) return;
 
-  for (const genreId of genreIds) {
-    const name = genreNames[genreId] ?? `Genre ${genreId}`;
+  // 1. Fetch ALL existing rows for this profile + these genres in one query
+  const { data: existing } = await supabase
+    .from("genre_preferences")
+    .select("genre_id, watch_count, completed_count")
+    .eq("profile_id", profileId)
+    .in("genre_id", genreIds);
 
-    const { data: existing } = await supabase
-      .from("genre_preferences")
-      .select("watch_count, completed_count")
-      .eq("profile_id", profileId)
-      .eq("genre_id", genreId)
-      .single();
+  const existingMap = new Map(
+    (existing ?? []).map((r) => [r.genre_id as number, r as { genre_id: number; watch_count: number; completed_count: number }])
+  );
 
-    if (existing) {
-      await supabase.from("genre_preferences").update({
-        watch_count:     existing.watch_count     + 1,
-        completed_count: existing.completed_count + (completed ? 1 : 0),
-      })
-      .eq("profile_id", profileId)
-      .eq("genre_id", genreId);
-    } else {
-      await supabase.from("genre_preferences").insert({
-        profile_id:      profileId,
-        genre_id:        genreId,
-        genre_name:      name,
-        watch_count:     1,
-        completed_count: completed ? 1 : 0,
-      });
-    }
-  }
+  // 2. Build batch rows with updated counts
+  const rows = genreIds.map((genreId) => {
+    const prev = existingMap.get(genreId);
+    return {
+      profile_id:      profileId,
+      genre_id:        genreId,
+      genre_name:      genreNames[genreId] ?? `Genre ${genreId}`,
+      watch_count:     (prev?.watch_count     ?? 0) + 1,
+      completed_count: (prev?.completed_count ?? 0) + (completed ? 1 : 0),
+    };
+  });
+
+  // 3. Single batch upsert — PK is (profile_id, genre_id)
+  await supabase.from("genre_preferences").upsert(rows, {
+    onConflict: "profile_id,genre_id",
+  });
 }
 
 /** Get top N preferred genres ordered by watch count */

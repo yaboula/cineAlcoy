@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 import { getPopularMovies, getNowPlayingMovies, getTopRatedMovies } from "@/lib/tmdb";
 import MediaRow from "@/components/catalog/MediaRow";
 import CardSkeletonRow from "@/components/catalog/CardSkeletonRow";
-import type { MediaItem } from "@/types";
+import { injectMovieMediaType } from "@/types";
 
 export const metadata: Metadata = {
   title: "Películas — Cinema",
@@ -17,17 +17,17 @@ export const metadata: Metadata = {
 
 async function PopularMoviesSection() {
   const data = await getPopularMovies();
-  return <MediaRow title="Populares" items={data.results as MediaItem[]} />;
+  return <MediaRow title="Populares" items={injectMovieMediaType(data.results)} />;
 }
 
 async function NowPlayingSection() {
   const data = await getNowPlayingMovies();
-  return <MediaRow title="Estrenos en cines" items={data.results as MediaItem[]} />;
+  return <MediaRow title="Estrenos en cines" items={injectMovieMediaType(data.results)} />;
 }
 
 async function TopRatedMoviesSection() {
   const data = await getTopRatedMovies();
-  return <MediaRow title="Mejor valoradas" items={data.results as MediaItem[]} />;
+  return <MediaRow title="Mejor valoradas" items={injectMovieMediaType(data.results)} />;
 }
 
 export default function MoviesPage() {

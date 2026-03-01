@@ -36,7 +36,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' https://image.tmdb.org data: blob:",
               "font-src 'self' https://fonts.gstatic.com",
               "frame-src https: blob:",
-              "connect-src 'self' https://api.themoviedb.org",
+              "connect-src 'self' https://api.themoviedb.org https://*.supabase.co",
             ].join("; "),
           },
         ],

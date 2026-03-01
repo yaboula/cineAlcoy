@@ -42,17 +42,19 @@ export default function TVPlayerSection({
   const [currentEpisode, setCurrentEpisode] = useState(1);
   const [episodes, setEpisodes] = useState<Episode[]>(initialEpisodes);
   const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
+  const [seasonError, setSeasonError] = useState(false);
 
   async function handleSeasonChange(seasonNum: number) {
     if (seasonNum === currentSeason) return;
     setIsLoadingEpisodes(true);
+    setSeasonError(false);
     try {
       const eps = await fetchSeasonEpisodes(seriesId, seasonNum);
       setEpisodes(eps);
       setCurrentSeason(seasonNum);
       setCurrentEpisode(1);
     } catch {
-      // Silently fail — keep current episodes
+      setSeasonError(true);
     } finally {
       setIsLoadingEpisodes(false);
     }
@@ -117,6 +119,18 @@ export default function TVPlayerSection({
               </svg>
             )}
           </div>
+
+          {seasonError && (
+            <p className="text-sm text-destructive animate-fadeIn">
+              No se pudieron cargar los episodios.{" "}
+              <button
+                onClick={() => handleSeasonChange(currentSeason)}
+                className="underline underline-offset-2 hover:text-destructive/80 transition-colors"
+              >
+                Reintentar
+              </button>
+            </p>
+          )}
 
           {/* Episode list */}
           <div className="space-y-1 max-h-80 overflow-y-auto pr-1 -mr-1">

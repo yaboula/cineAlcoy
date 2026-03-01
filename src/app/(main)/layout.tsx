@@ -4,6 +4,7 @@
 
 import Header from "@/components/ui/Header";
 import Footer from "@/components/ui/Footer";
+import { ProfileProvider } from "@/components/providers/ProfileProvider";
 
 export default function MainLayout({
   children,
@@ -11,10 +12,12 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-1">{children}</main>
-      <Footer />
-    </div>
+    <ProfileProvider>
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1">{children}</main>
+        <Footer />
+      </div>
+    </ProfileProvider>
   );
 }

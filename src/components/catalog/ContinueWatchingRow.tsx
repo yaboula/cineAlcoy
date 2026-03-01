@@ -9,13 +9,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ImageWithFallback from "@/components/ui/ImageWithFallback";
-import { useProfile } from "@/hooks/useProfile";
+import { useProfileContext } from "@/components/providers/ProfileProvider";
 import { getContinueWatching } from "@/lib/supabase/watch-history";
 import { getTMDBImageUrl } from "@/lib/utils";
 import type { WatchHistoryRow } from "@/lib/supabase/types";
 
 export default function ContinueWatchingRow() {
-  const { profile, loading: profileLoading } = useProfile();
+  const { profile, loading: profileLoading } = useProfileContext();
   const [items, setItems] = useState<WatchHistoryRow[]>([]);
   const [mounted, setMounted] = useState(false);
 
@@ -25,7 +25,9 @@ export default function ContinueWatchingRow() {
 
   useEffect(() => {
     if (!profile) return;
-    getContinueWatching(profile.id, 20).then(setItems);
+    getContinueWatching(profile.id, 20)
+      .then(setItems)
+      .catch(() => { /* Supabase unavailable — show nothing */ });
   }, [profile]);
 
   // Don''t render until client hydration is complete or while loading

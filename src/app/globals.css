@@ -82,6 +82,13 @@ html {
   color: #fff;
 }
 
+/* ── Interactive elements: cursor pointer ─────── */
+button,
+[role="button"],
+summary {
+  cursor: pointer;
+}
+
 /* ── Smooth image rendering ──────────────────── */
 img {
   image-rendering: auto;

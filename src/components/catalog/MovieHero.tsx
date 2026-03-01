@@ -1,25 +1,33 @@
 // ──────────────────────────────────────────────────
-// MovieHero — Full-bleed backdrop with gradient overlay for /movie/[id]
+// MovieHero — Full-bleed backdrop with gradient overlay
+// Works for both movies and TV shows via HeroMedia interface
 // Server Component
 // ──────────────────────────────────────────────────
 
 import Image from "next/image";
 import { getTMDBImageUrl } from "@/lib/utils";
-import type { MovieDetail } from "@/types";
+
+/** Minimal shape needed for the hero backdrop — works for movies and TV shows */
+interface HeroMedia {
+  title?: string;
+  name?: string;
+  backdrop_path: string | null;
+}
 
 interface MovieHeroProps {
-  movie: MovieDetail;
+  movie: HeroMedia;
 }
 
 export default function MovieHero({ movie }: MovieHeroProps) {
   const backdropUrl = getTMDBImageUrl(movie.backdrop_path, "original");
+  const displayTitle = movie.title ?? movie.name ?? "";
 
   return (
     <div className="relative h-[50vh] md:h-[65vh] w-full overflow-hidden">
       {backdropUrl ? (
         <Image
           src={backdropUrl}
-          alt={`Backdrop de ${movie.title}`}
+          alt={`Backdrop de ${displayTitle}`}
           fill
           priority
           sizes="100vw"

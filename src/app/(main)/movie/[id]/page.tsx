@@ -14,7 +14,7 @@ import {
 } from "@/lib/tmdb";
 import { getTMDBImageUrl } from "@/lib/utils";
 import { truncateText } from "@/lib/utils";
-import type { MediaItem } from "@/types";
+import { injectMovieMediaType } from "@/types";
 
 import MovieHero from "@/components/catalog/MovieHero";
 import MovieInfo from "@/components/catalog/MovieInfo";
@@ -67,12 +67,12 @@ export default async function MoviePage({ params }: PageProps) {
   const [movie, credits, recommendations] = await Promise.all([
     getMovieDetail(numericId).catch(() => null),
     getMovieCredits(numericId).catch(() => ({ id: numericId, cast: [], crew: [] })),
-    getMovieRecommendations(numericId).catch(() => ({ results: [] as MediaItem[], page: 1, total_pages: 0, total_results: 0 })),
+    getMovieRecommendations(numericId).catch(() => ({ results: [], page: 1, total_pages: 0, total_results: 0 })),
   ]);
 
   if (!movie) notFound();
 
-  const recsItems = recommendations.results as MediaItem[];
+  const recsItems = injectMovieMediaType(recommendations.results);
 
   return (
     <div className="min-h-screen animate-fadeIn">

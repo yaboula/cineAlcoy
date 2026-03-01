@@ -262,3 +262,16 @@ export function getMediaYear(item: MediaItem): string {
   if (!date) return "";
   return date.substring(0, 4);
 }
+
+/**
+ * Inject `media_type` into TMDB list endpoint results.
+ * TMDB list endpoints (e.g. /movie/popular) don't include `media_type` in responses,
+ * but our MediaItem union type requires it for correct discrimination.
+ */
+export function injectMovieMediaType(items: Omit<MovieSummary, "media_type">[]): MovieSummary[] {
+  return items.map((item) => ({ ...item, media_type: "movie" as const }));
+}
+
+export function injectTVMediaType(items: Omit<TVShowSummary, "media_type">[]): TVShowSummary[] {
+  return items.map((item) => ({ ...item, media_type: "tv" as const }));
+}

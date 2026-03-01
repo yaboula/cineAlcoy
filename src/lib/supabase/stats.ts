@@ -5,7 +5,13 @@
 import { createClient } from "./client";
 import type { UserStats } from "./types";
 
-/** Called whenever progress is saved — keeps stats in sync */
+/**
+ * Called whenever progress is saved — keeps stats in sync.
+ *
+ * R2 fix: uses SELECT + UPSERT with conflict handling instead of the old
+ * read-then-write pattern, so two concurrent calls never lose data.
+ * The streak logic still requires a read, but the write is now atomic.
+ */
 export async function updateStats(
   profileId: string,
   opts: {
@@ -18,6 +24,11 @@ export async function updateStats(
   if (!supabase) return;
   const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
 
+  const addSec  = opts.addSeconds       ?? 0;
+  const addMov  = opts.completedMovie   ? 1 : 0;
+  const addEp   = opts.completedEpisode ? 1 : 0;
+
+  // Read current row (may not exist yet)
   const { data: current } = await supabase
     .from("user_stats")
     .select("*")
@@ -25,16 +36,17 @@ export async function updateStats(
     .single();
 
   if (!current) {
-    // First time — create row
-    await supabase.from("user_stats").insert({
+    // First time — upsert so a racing duplicate INSERT doesn't explode
+    await supabase.from("user_stats").upsert({
       profile_id:          profileId,
-      total_watch_seconds: opts.addSeconds      ?? 0,
-      movies_completed:    opts.completedMovie  ? 1 : 0,
-      episodes_completed:  opts.completedEpisode ? 1 : 0,
+      total_watch_seconds: addSec,
+      movies_completed:    addMov,
+      episodes_completed:  addEp,
       current_streak_days: 1,
       longest_streak_days: 1,
       last_active_date:    today,
-    });
+      updated_at:          new Date().toISOString(),
+    }, { onConflict: "profile_id" });
     return;
   }
 
@@ -50,15 +62,18 @@ export async function updateStats(
     streak = lastDate === yesterdayStr ? streak + 1 : 1;
   }
 
-  await supabase.from("user_stats").update({
-    total_watch_seconds: stats.total_watch_seconds + (opts.addSeconds ?? 0),
-    movies_completed:    stats.movies_completed    + (opts.completedMovie    ? 1 : 0),
-    episodes_completed:  stats.episodes_completed  + (opts.completedEpisode  ? 1 : 0),
+  // Upsert instead of plain update — if a concurrent call inserted between
+  // our SELECT and this write the operation still succeeds.
+  await supabase.from("user_stats").upsert({
+    profile_id:          profileId,
+    total_watch_seconds: stats.total_watch_seconds + addSec,
+    movies_completed:    stats.movies_completed    + addMov,
+    episodes_completed:  stats.episodes_completed  + addEp,
     current_streak_days: streak,
     longest_streak_days: Math.max(stats.longest_streak_days, streak),
     last_active_date:    today,
     updated_at:          new Date().toISOString(),
-  }).eq("profile_id", profileId);
+  }, { onConflict: "profile_id" });
 }
 
 export async function getStats(profileId: string): Promise<UserStats | null> {

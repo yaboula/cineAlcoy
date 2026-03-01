@@ -21,7 +21,16 @@ export async function searchMoreResults(
   query: string,
   page: number
 ): Promise<{ items: MediaItem[]; totalPages: number }> {
-  const data = await searchMulti(query, page);
+  // ── Input validation (client data is untrusted) ──
+  const trimmed = query.trim();
+  if (!trimmed || trimmed.length > 200) {
+    return { items: [], totalPages: 0 };
+  }
+  if (!Number.isInteger(page) || page < 1 || page > 500) {
+    return { items: [], totalPages: 0 };
+  }
+
+  const data = await searchMulti(trimmed, page);
   return {
     items: filterMediaItems(data.results),
     totalPages: data.total_pages,

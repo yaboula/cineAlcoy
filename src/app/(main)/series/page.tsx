@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 import { getPopularTVShows, getOnTheAirTVShows, getTopRatedTVShows } from "@/lib/tmdb";
 import MediaRow from "@/components/catalog/MediaRow";
 import CardSkeletonRow from "@/components/catalog/CardSkeletonRow";
-import type { MediaItem } from "@/types";
+import { injectTVMediaType } from "@/types";
 
 export const metadata: Metadata = {
   title: "Series — Cinema",
@@ -17,17 +17,17 @@ export const metadata: Metadata = {
 
 async function PopularTVSection() {
   const data = await getPopularTVShows();
-  return <MediaRow title="Populares" items={data.results as MediaItem[]} />;
+  return <MediaRow title="Populares" items={injectTVMediaType(data.results)} />;
 }
 
 async function OnTheAirSection() {
   const data = await getOnTheAirTVShows();
-  return <MediaRow title="En emisión" items={data.results as MediaItem[]} />;
+  return <MediaRow title="En emisión" items={injectTVMediaType(data.results)} />;
 }
 
 async function TopRatedTVSection() {
   const data = await getTopRatedTVShows();
-  return <MediaRow title="Mejor valoradas" items={data.results as MediaItem[]} />;
+  return <MediaRow title="Mejor valoradas" items={injectTVMediaType(data.results)} />;
 }
 
 export default function SeriesPage() {

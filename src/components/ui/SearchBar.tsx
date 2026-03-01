@@ -90,14 +90,20 @@ export default function SearchBar({
     const q = e.target.value;
     setValue(q);
 
-    clearTimeout(debounceNav.current);
-    debounceNav.current = setTimeout(() => {
-      if (q.trim()) {
-        router.push(`/search?q=${encodeURIComponent(q.trim())}`);
-      } else {
-        router.push("/search");
-      }
-    }, 400);
+    // Compact (header) variant: only navigate on Enter / suggestion click,
+    // never on keystroke — the user is still browsing another page.
+    // Page variant: update the URL live but use `replace` so the browser
+    // history doesn't accumulate one entry per debounced keystroke.
+    if (isPage) {
+      clearTimeout(debounceNav.current);
+      debounceNav.current = setTimeout(() => {
+        if (q.trim()) {
+          router.replace(`/search?q=${encodeURIComponent(q.trim())}`);
+        } else {
+          router.replace("/search");
+        }
+      }, 400);
+    }
 
     clearTimeout(debounceSug.current);
     debounceSug.current = setTimeout(() => fetchSuggestions(q), 200);
@@ -121,7 +127,8 @@ export default function SearchBar({
       return;
     }
 
-    // Enter always navigates: selected suggestion takes priority, else full search
+    // Enter always navigates: selected suggestion takes priority, else full search.
+    // For compact variant this is the PRIMARY navigation trigger.
     if (e.key === "Enter") {
       e.preventDefault();
       if (showDropdown && selectedIndex >= 0 && suggestions[selectedIndex]) {

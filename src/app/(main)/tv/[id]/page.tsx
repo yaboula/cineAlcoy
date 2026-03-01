@@ -9,7 +9,7 @@ import type { Metadata } from "next";
 import { validateTMDBId } from "@/lib/validation";
 import { getTVShowDetail, getTVShowCredits, getTVShowRecommendations, getSeasonDetail } from "@/lib/tmdb";
 import { getTMDBImageUrl, truncateText } from "@/lib/utils";
-import type { MediaItem } from "@/types";
+import { injectTVMediaType } from "@/types";
 
 import MovieHero from "@/components/catalog/MovieHero";
 import TVShowInfo from "@/components/catalog/TVShowInfo";
@@ -71,24 +71,11 @@ export default async function TVPage({ params }: PageProps) {
         .catch(() => [])
     : [];
 
-  const recsItems = recommendations.results as MediaItem[];
-
-  // Build a MovieDetail-compatible object for MovieHero (same backdrop field)
-  const heroData = {
-    ...show,
-    title: show.name,
-    release_date: show.first_air_date,
-    runtime: null,
-    tagline: show.tagline,
-    budget: 0,
-    revenue: 0,
-    status: show.status,
-    production_companies: [],
-  };
+  const recsItems = injectTVMediaType(recommendations.results);
 
   return (
     <div className="min-h-screen animate-fadeIn">
-      <MovieHero movie={heroData} />
+      <MovieHero movie={show} />
 
       <div className="mx-auto max-w-7xl px-4 lg:px-12 -mt-16 relative z-10 space-y-12 pb-4">
         <TVShowInfo
