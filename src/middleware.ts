@@ -1,7 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Next.js Proxy — refreshes Supabase Auth session on every request
+// Next.js Middleware — refreshes Supabase Auth session on every request
 // and protects authenticated-only routes.
-// (Next.js 16: "middleware" renamed to "proxy")
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NextResponse, type NextRequest } from "next/server";
@@ -16,7 +15,7 @@ const PROTECTED_ROUTES = ["/profile", "/watchlist"];
 /** Routes only for guests (redirect to / if already logged in) */
 const GUEST_ONLY_ROUTES = ["/login", "/register"];
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   let response = NextResponse.next({ request });
 
