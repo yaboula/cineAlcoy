@@ -12,7 +12,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useState, useCallback } from "react";
-import { Clock, Flame, Film, Tv2, TrendingUp, History } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Clock, Flame, Film, Tv2, TrendingUp, History, LogOut } from "lucide-react";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { useProfileContext } from "@/components/providers/ProfileProvider";
 import ProfileEditor from "@/components/catalog/ProfileEditor";
 import WatchHistoryGrid from "@/components/catalog/WatchHistoryGrid";
@@ -23,7 +25,16 @@ import { cn } from "@/lib/utils";
 import type { Profile, UserStats, WatchHistoryRow, GenrePreference } from "@/lib/supabase/types";
 
 export default function ProfileDashboardClient() {
+  const { user, loading: authLoading, signOut } = useAuth();
   const { profile: ctxProfile, loading: profileLoading } = useProfileContext();
+  const router = useRouter();
+
+  // Redirect unauthenticated users to login
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/login");
+    }
+  }, [authLoading, user, router]);
 
   // Local mutable copy so edits propagate instantly
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -39,12 +50,14 @@ export default function ProfileDashboardClient() {
 
     // Profile failed to load (no Supabase / env vars missing)
     if (!ctxProfile) {
-      setLoading(false);
-      setDataError(true);
+      queueMicrotask(() => {
+        setLoading(false);
+        setDataError(true);
+      });
       return;
     }
 
-    setProfile(ctxProfile);
+    queueMicrotask(() => setProfile(ctxProfile));
 
     Promise.all([
       getStats(ctxProfile.id),
@@ -154,7 +167,23 @@ export default function ProfileDashboardClient() {
       {/* ═══════════════════════════════════════════════════════════════════
           Section 1: Profile Header
           ═══════════════════════════════════════════════════════════════════ */}
-      <ProfileEditor profile={profile} onUpdate={handleProfileUpdate} />
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <ProfileEditor profile={profile} onUpdate={handleProfileUpdate} />
+          {profile.email && (
+            <p className="text-xs text-text-muted mt-1 ml-25">
+              {profile.email}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={signOut}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-text-secondary border border-border hover:text-red-400 hover:border-red-400/50 hover:bg-red-400/5 transition-colors shrink-0"
+        >
+          <LogOut className="w-4 h-4" aria-hidden />
+          Cerrar sesión
+        </button>
+      </div>
 
       {/* ═══════════════════════════════════════════════════════════════════
           Section 2: Stats Overview

@@ -1,11 +1,11 @@
 "use client";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ProfileProvider — shared context for the device profile
+// ProfileProvider — shared context for the authenticated user's profile
 //
-// Replaces individual `useProfile()` calls in every hook/component.
-// Wrap the app once (in the main layout) and all children share the same
-// profile instance without triggering redundant Supabase calls.
+// Depends on AuthProvider being mounted above it in the tree.
+// When the auth user is available, fetches (or creates fallback for)
+// the matching profile row from Supabase.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import {
@@ -15,31 +15,54 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getOrCreateProfile } from "@/lib/supabase/profile";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { getProfileByUserId } from "@/lib/supabase/profile";
 import type { Profile } from "@/lib/supabase/types";
 
 interface ProfileContextValue {
   profile: Profile | null;
   loading: boolean;
+  /** Force a re-fetch of the profile (e.g. after editing name) */
+  refetch: () => void;
 }
 
 const ProfileContext = createContext<ProfileContextValue>({
   profile: null,
   loading: true,
+  refetch: () => {},
 });
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
+  const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [seq, setSeq] = useState(0);
 
   useEffect(() => {
-    getOrCreateProfile()
-      .then(setProfile)
-      .finally(() => setLoading(false));
-  }, []);
+    // Wait for auth to settle
+    if (authLoading) return;
+
+    // Not logged in → no profile
+    if (!user) {
+      queueMicrotask(() => {
+        setProfile(null);
+        setLoading(false);
+      });
+      return;
+    }
+
+    // Fetch profile for authenticated user
+    let cancelled = false;
+    getProfileByUserId(user.id)
+      .then((p) => { if (!cancelled) setProfile(p); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [user, authLoading, seq]);
+
+  const refetch = () => setSeq((s) => s + 1);
 
   return (
-    <ProfileContext.Provider value={{ profile, loading }}>
+    <ProfileContext.Provider value={{ profile, loading, refetch }}>
       {children}
     </ProfileContext.Provider>
   );
@@ -47,7 +70,6 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
 /**
  * Access the shared profile. Must be used inside <ProfileProvider>.
- * Drop-in replacement for the old `useProfile()` hook.
  */
 export function useProfileContext(): ProfileContextValue {
   return useContext(ProfileContext);

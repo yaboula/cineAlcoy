@@ -9,9 +9,11 @@
 import { useEffect, useState, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Film, Search, Menu, X, User } from "lucide-react";
+import { Film, Search, Menu, X, User, LogIn } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { useProfileContext } from "@/components/providers/ProfileProvider";
 import SearchBar from "@/components/ui/SearchBar";
 
 const NAV_LINKS = [
@@ -23,8 +25,12 @@ const NAV_LINKS = [
 export default function Header() {
   const pathname = usePathname();
   const isSearchPage = pathname.startsWith("/search");
+  const { user, loading: authLoading } = useAuth();
+  const { profile } = useProfileContext();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const isLoggedIn = !authLoading && !!user;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -129,19 +135,34 @@ export default function Header() {
             </>
           )}
 
-          {/* ── Profile link (desktop) ─────────────── */}
-          <Link
-            href="/profile"
-            className={cn(
-              "hidden md:flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
-              pathname === "/profile"
-                ? "border-accent-primary bg-accent-primary/15 text-accent-primary"
-                : "border-border text-text-secondary hover:border-accent-primary/50 hover:text-text-primary"
-            )}
-            aria-label="Mi perfil"
-          >
-            <User className="w-4 h-4" aria-hidden />
-          </Link>
+          {/* ── Auth area (desktop) ───────────────── */}
+          {isLoggedIn ? (
+            <Link
+              href="/profile"
+              className={cn(
+                "hidden md:flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
+                pathname === "/profile"
+                  ? "border-accent-primary bg-accent-primary/15 text-accent-primary"
+                  : "border-border text-text-secondary hover:border-accent-primary/50 hover:text-text-primary"
+              )}
+              aria-label="Mi perfil"
+              title={profile?.display_name ?? "Perfil"}
+            >
+              {profile?.avatar_emoji ? (
+                <span className="text-sm leading-none">{profile.avatar_emoji}</span>
+              ) : (
+                <User className="w-4 h-4" aria-hidden />
+              )}
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-accent-primary text-white hover:bg-accent-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+            >
+              <LogIn className="w-3.5 h-3.5" aria-hidden />
+              Entrar
+            </Link>
+          )}
 
           {/* ── Mobile menu toggle ──────────────────── */}
           <button
@@ -262,24 +283,38 @@ export default function Header() {
                   </Link>
                 </motion.div>
 
-                {/* Profile link in mobile menu */}
+                {/* Profile / Login link in mobile menu */}
                 <motion.div
                   initial={{ x: 40, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.05 + (NAV_LINKS.length + 1) * 0.05, duration: 0.2 }}
                 >
-                  <Link
-                    href="/profile"
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
-                      pathname === "/profile"
-                        ? "text-text-primary bg-surface-hover border-l-2 border-accent-primary"
-                        : "text-text-secondary hover:text-text-primary hover:bg-surface-hover"
-                    )}
-                  >
-                    <User className="w-4 h-4" aria-hidden />
-                    Mi perfil
-                  </Link>
+                  {isLoggedIn ? (
+                    <Link
+                      href="/profile"
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary",
+                        pathname === "/profile"
+                          ? "text-text-primary bg-surface-hover border-l-2 border-accent-primary"
+                          : "text-text-secondary hover:text-text-primary hover:bg-surface-hover"
+                      )}
+                    >
+                      {profile?.avatar_emoji ? (
+                        <span className="text-base leading-none">{profile.avatar_emoji}</span>
+                      ) : (
+                        <User className="w-4 h-4" aria-hidden />
+                      )}
+                      Mi perfil
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/login"
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-accent-primary hover:bg-surface-hover transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+                    >
+                      <LogIn className="w-4 h-4" aria-hidden />
+                      Iniciar sesión
+                    </Link>
+                  )}
                 </motion.div>
               </div>
 

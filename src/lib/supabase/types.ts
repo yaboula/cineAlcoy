@@ -8,7 +8,8 @@ export type MediaType = "movie" | "tv";
 //  Row shapes (what SELECT returns) 
 export interface Profile {
   id: string;
-  device_id: string;
+  user_id: string;
+  email: string | null;
   display_name: string;
   avatar_emoji: string;
   created_at: string;
@@ -75,8 +76,8 @@ export type Database = {
     Tables: {
       profiles: {
         Row:    Profile;
-        Insert: { device_id: string; display_name?: string; avatar_emoji?: string };
-        Update: { display_name?: string; avatar_emoji?: string; updated_at?: string };
+        Insert: { user_id: string; email?: string; display_name?: string; avatar_emoji?: string };
+        Update: { display_name?: string; avatar_emoji?: string; email?: string; updated_at?: string };
       };
       watch_history: {
         Row:    WatchHistoryRow;

@@ -4,11 +4,11 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 
 -- ── 1. Profiles ──────────────────────────────────────────────────────────────
--- Each "user" is identified by a UUID stored in their browser's localStorage.
--- No login required. Works for small groups out of the box.
+-- Each profile is linked to a Supabase Auth user via auth.uid().
 CREATE TABLE IF NOT EXISTS profiles (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  device_id      TEXT UNIQUE NOT NULL,          -- localStorage key
+  user_id        UUID UNIQUE NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  email          TEXT,
   display_name   TEXT NOT NULL DEFAULT 'Usuario',
   avatar_emoji   TEXT NOT NULL DEFAULT '🎬',
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -105,7 +105,7 @@ CREATE INDEX IF NOT EXISTS idx_watchlist_profile           ON watchlist     (pro
 CREATE INDEX IF NOT EXISTS idx_genre_prefs_profile_count   ON genre_preferences (profile_id, watch_count DESC);
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Row Level Security — every user only sees their own rows
+-- Row Level Security — each user only sees their own rows
 -- ─────────────────────────────────────────────────────────────────────────────
 ALTER TABLE profiles           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE watch_history      ENABLE ROW LEVEL SECURITY;
@@ -113,9 +113,47 @@ ALTER TABLE watchlist          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_stats         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE genre_preferences  ENABLE ROW LEVEL SECURITY;
 
--- Allow all operations from the anon key (device-id auth handled in app)
-CREATE POLICY "open_profiles"           ON profiles           FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "open_watch_history"      ON watch_history      FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "open_watchlist"          ON watchlist          FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "open_user_stats"         ON user_stats         FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "open_genre_preferences"  ON genre_preferences  FOR ALL USING (true) WITH CHECK (true);
+-- Profiles: users can read/update their own profile
+CREATE POLICY "profiles_select_own" ON profiles FOR SELECT
+  USING (user_id = auth.uid());
+CREATE POLICY "profiles_insert_own" ON profiles FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+CREATE POLICY "profiles_update_own" ON profiles FOR UPDATE
+  USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+
+-- Watch History: users can manage their own history
+CREATE POLICY "watch_history_all_own" ON watch_history FOR ALL
+  USING (profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()))
+  WITH CHECK (profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()));
+
+-- Watchlist: users can manage their own list
+CREATE POLICY "watchlist_all_own" ON watchlist FOR ALL
+  USING (profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()))
+  WITH CHECK (profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()));
+
+-- User Stats: users can manage their own stats
+CREATE POLICY "user_stats_all_own" ON user_stats FOR ALL
+  USING (profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()))
+  WITH CHECK (profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()));
+
+-- Genre Preferences: users can manage their own preferences
+CREATE POLICY "genre_prefs_all_own" ON genre_preferences FOR ALL
+  USING (profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()))
+  WITH CHECK (profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()));
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Auto-create profile on signup (trigger on auth.users)
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (user_id, email, display_name, avatar_emoji)
+  VALUES (NEW.id, NEW.email, COALESCE(NEW.raw_user_meta_data->>'display_name', 'Usuario'), '🎬');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
