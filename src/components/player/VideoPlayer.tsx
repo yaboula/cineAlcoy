@@ -99,14 +99,17 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
   const [open, setOpen] = useState(false);
   // Track which iframeKey the user has started — auto-resets on content/source change
   const [startedKey, setStartedKey] = useState<string | null>(null);
-  const [sourceId, setSourceId] = useState<string>(() => {
-    if (typeof window === "undefined") return "vidsrc-to";
+  // Always initialise to the default — reads localStorage after mount to avoid
+  // SSR/client mismatch (React hydration error #418).
+  const [sourceId, setSourceId] = useState<string>("vidsrc-to");
+
+  // Restore last chosen source from localStorage after hydration
+  useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved && SOURCES.some((src) => src.id === saved)) return saved;
+      if (saved && SOURCES.some((src) => src.id === saved)) setSourceId(saved);
     } catch { /* ignore */ }
-    return "vidsrc-to";
-  });
+  }, []);
 
   const active = SOURCES.find((src) => src.id === sourceId) ?? SOURCES[0];
   const iframeKey = `${sourceId}-${tmdbId}-${s}-${e}`;
