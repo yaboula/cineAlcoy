@@ -62,6 +62,14 @@ const SOURCES: PlayerSource[] = [
       return type === "movie" ? base : `${base}&s=${s}&e=${e}`;
     },
   },
+  {
+    id: "smashy",
+    label: "SmashyStream",
+    buildUrl: (id, type, s, e) =>
+      type === "movie"
+        ? `https://player.smashy.stream/movie/${id}`
+        : `https://player.smashy.stream/tv/${id}?s=${s}&e=${e}`,
+  },
 ];
 
 const STORAGE_KEY = "cinema_player_source";
