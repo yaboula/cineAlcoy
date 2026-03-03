@@ -9,7 +9,9 @@
 //   episode  number   optional (TV, default 1)
 
 import { NextRequest, NextResponse } from "next/server";
-import { MOVIES } from "@consumet/extensions";
+// Import FlixHQ directly to avoid bundling anime providers that depend on
+// got-scraping (ESM-only), which breaks Turbopack / Vercel builds.
+import FlixHQ from "@consumet/extensions/dist/providers/movies/flixhq";
 import type { IMovieResult } from "@consumet/extensions/dist/models";
 
 export const runtime = "nodejs";
@@ -52,7 +54,7 @@ async function resolveWithFlixHQ(opts: {
   episode: number;
 }) {
   const { title, type, year, season, episode } = opts;
-  const flixhq = new MOVIES.FlixHQ();
+  const flixhq = new FlixHQ();
 
   const queries = [title, simplify(title)].filter(
     (q, i, arr) => arr.indexOf(q) === i
