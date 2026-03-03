@@ -8,7 +8,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
 
 /** Minimal type-only import to avoid SSR issues */
 type HlsType = import("hls.js").default;
@@ -48,6 +48,8 @@ export default function NativeVideoPlayer({
   const [streamData, setStreamData] = useState<StreamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [elapsed, setElapsed] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
 
   // ── Fetch stream URL from our API proxy ────────────────────────────────────
   useEffect(() => {
@@ -55,6 +57,10 @@ export default function NativeVideoPlayer({
     setLoading(true);
     setError(null);
     setStreamData(null);
+    setElapsed(0);
+
+    // Elapsed timer — shows user the request is in-flight (Railway can be slow to wake)
+    const tick = setInterval(() => setElapsed((n) => n + 1), 1000);
 
     const params = new URLSearchParams({
       title,
@@ -71,21 +77,23 @@ export default function NativeVideoPlayer({
       })
       .then((data) => {
         if (!cancelled) {
+          clearInterval(tick);
           setStreamData(data);
           setLoading(false);
         }
       })
       .catch((err: Error) => {
         if (!cancelled) {
+          clearInterval(tick);
           setError(err.message);
           setLoading(false);
         }
       });
 
-    return () => { cancelled = true; };
+    return () => { cancelled = true; clearInterval(tick); };
   // reset whenever the target content changes
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tmdbId, type, season, episode]);
+  }, [tmdbId, type, season, episode, retryCount]);
 
   // ── Attach HLS.js (or native) once we have a stream URL ───────────────────
   useEffect(() => {
@@ -169,9 +177,13 @@ export default function NativeVideoPlayer({
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10">
           <Loader2 className="w-10 h-10 animate-spin text-accent-primary" />
-          <p className="text-sm text-text-muted">Buscando stream directo…</p>
+          <p className="text-sm text-text-muted">
+            {elapsed < 8 ? "Buscando stream directo…" : "Despertando servidor…"}
+          </p>
           <p className="text-xs text-text-muted/60">
-            Resolviendo con FlixHQ · puede tardar unos segundos
+            {elapsed < 8
+              ? "Resolviendo con FlixHQ · puede tardar unos segundos"
+              : `Servidor tardando en responder · ${elapsed}s · por favor espera`}
           </p>
         </div>
       )}
@@ -184,8 +196,15 @@ export default function NativeVideoPlayer({
             No se pudo obtener un stream directo
           </p>
           <p className="text-xs text-text-muted max-w-xs">{error}</p>
+          <button
+            onClick={() => setRetryCount((n) => n + 1)}
+            className="flex items-center gap-2 mt-1 px-4 py-2 rounded-lg bg-accent-primary/20 hover:bg-accent-primary/30 text-accent-primary text-xs font-medium transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Reintentar
+          </button>
           <p className="text-xs text-text-muted/60 max-w-xs">
-            Prueba otro reproductor del menú de fuentes
+            Si persiste, prueba otro reproductor del menú de fuentes
           </p>
         </div>
       )}

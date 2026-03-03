@@ -14,7 +14,7 @@ const BASE = (
   process.env.CONSUMET_API_URL ?? "https://api.consumet.org"
 ).replace(/\/$/, "");
 
-const TIMEOUT_MS = 12_000;
+const TIMEOUT_MS = 25_000;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

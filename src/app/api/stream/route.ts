@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { resolveStream } from "@/lib/consumet/client";
 
 export const runtime = "nodejs"; // needs Node.js fetch + AbortController
+export const maxDuration = 60;  // Vercel: allow up to 60s for Consumet resolution
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
