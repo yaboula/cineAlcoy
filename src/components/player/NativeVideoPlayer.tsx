@@ -16,7 +16,7 @@ type HlsType = import("hls.js").default;
 interface NativeVideoPlayerProps {
   tmdbId: number;
   type: "movie" | "tv";
-  title: string;
+  title: string;        // still used for aria/display only
   releaseYear?: number | null;
   season?: number;
   episode?: number;
@@ -35,8 +35,6 @@ interface StreamData {
 export default function NativeVideoPlayer({
   tmdbId,
   type,
-  title,
-  releaseYear,
   season = 1,
   episode = 1,
   resumeFrom = 0,
@@ -63,9 +61,8 @@ export default function NativeVideoPlayer({
     const tick = setInterval(() => setElapsed((n) => n + 1), 1000);
 
     const params = new URLSearchParams({
-      title,
+      tmdbId: String(tmdbId),
       type,
-      ...(releaseYear ? { year: String(releaseYear) } : {}),
       ...(type === "tv" ? { season: String(season), episode: String(episode) } : {}),
     });
 
@@ -91,8 +88,6 @@ export default function NativeVideoPlayer({
       });
 
     return () => { cancelled = true; clearInterval(tick); };
-  // reset whenever the target content changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tmdbId, type, season, episode, retryCount]);
 
   // ── Attach HLS.js (or native) once we have a stream URL ───────────────────
