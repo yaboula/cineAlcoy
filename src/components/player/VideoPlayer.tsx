@@ -20,8 +20,6 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import PlayerDisclaimer from "@/components/ui/PlayerDisclaimer";
 import { useWatchProgress } from "@/hooks/useWatchProgress";
-import NativeVideoPlayer from "@/components/player/NativeVideoPlayer";
-
 /** Format seconds as "1h 23m" or "12:34" */
 function formatResumeTime(secs: number): string {
   const h = Math.floor(secs / 3600);
@@ -70,12 +68,6 @@ const SOURCES: PlayerSource[] = [
       type === "movie"
         ? `https://player.smashy.stream/movie/${id}`
         : `https://player.smashy.stream/tv/${id}?s=${s}&e=${e}`,
-  },
-  {
-    id: "consumet",
-    label: "Directo ✦",
-    // buildUrl is unused for Consumet — NativeVideoPlayer handles its own fetch
-    buildUrl: () => "",
   },
 ];
 
@@ -166,9 +158,8 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
   }, [iframeKey, resumeFrom]);
 
   // Start elapsed timer once the user presses play, save every 30 s
-  // (Consumet / NativeVideoPlayer manages its own progress via onProgress callback)
   useEffect(() => {
-    if (!hasStarted || sourceId === "consumet") return;
+    if (!hasStarted) return;
     timerRef.current = setInterval(() => {
       elapsedRef.current += 30;
       const pct = durationSeconds ? elapsedRef.current / durationSeconds : 0;
@@ -252,9 +243,6 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
                       {src.id === "vidsrc-to" && (
                         <span className="ml-1.5 text-[10px] text-accent-primary/70">★ default</span>
                       )}
-                      {src.id === "consumet" && (
-                        <span className="ml-1.5 text-[10px] text-emerald-400/80">sin ads</span>
-                      )}
                     </button>
                   </li>
                 ))}
@@ -324,24 +312,7 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
                 </div>
               )}
 
-              {sourceId === "consumet" ? (
-                <NativeVideoPlayer
-                  key={iframeKey}
-                  tmdbId={tmdbId}
-                  type={type}
-                  title={title ?? ""}
-                  releaseYear={releaseYear}
-                  season={s}
-                  episode={e}
-                  resumeFrom={resumeFrom}
-                  durationSeconds={durationSeconds}
-                  onProgress={(elapsed, completed) => {
-                    elapsedRef.current = elapsed;
-                    saveProgress(elapsed, completed);
-                  }}
-                />
-              ) : (
-                <iframe
+              <iframe
                   key={iframeKey}
                   src={iframeSrc}
                   className="w-full h-full border-0"
@@ -351,7 +322,6 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
                   title={`Reproductor ${active.label}`}
                   onLoad={() => { clearTimeout(loadTimerRef.current); setIsLoading(false); }}
                 />
-              )}
             </>
           )}
         </div>
