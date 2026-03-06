@@ -147,11 +147,12 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
   // SSR/client mismatch (React hydration error #418).
   const [sourceId, setSourceId] = useState<string>("vidsrc-to");
 
-  // Restore last chosen source from localStorage after hydration
+  // Restore last chosen source from localStorage after hydration.
+  // "akwam" is never persisted (scraper-based, session-only).
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved && SOURCES.some((src) => src.id === saved)) setSourceId(saved);
+      if (saved && saved !== "akwam" && SOURCES.some((src) => src.id === saved)) setSourceId(saved);
     } catch { /* ignore */ }
   }, []);
 
@@ -243,7 +244,10 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
     setSourceId(id);
     setIsLoading(false); // Don't show spinner on source change — just swap
     setOpen(false);
-    try { localStorage.setItem(STORAGE_KEY, id); } catch { /* ignore */ }
+    // Don't persist akwam — it's scraper-based and session-only
+    if (id !== "akwam") {
+      try { localStorage.setItem(STORAGE_KEY, id); } catch { /* ignore */ }
+    }
   }
 
   return (
