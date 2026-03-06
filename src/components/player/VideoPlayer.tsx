@@ -20,6 +20,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import PlayerDisclaimer from "@/components/ui/PlayerDisclaimer";
 import { useWatchProgress } from "@/hooks/useWatchProgress";
+import { fetchAkwamStreamUrl } from "@/actions/akwam-action";
 /** Format seconds as "1h 23m" or "12:34" */
 function formatResumeTime(secs: number): string {
   const h = Math.floor(secs / 3600);
@@ -33,7 +34,13 @@ function formatResumeTime(secs: number): string {
 interface PlayerSource {
   id: string;
   label: string;
-  buildUrl: (tmdbId: number, type: "movie" | "tv", season: number, episode: number) => string;
+  /**
+   * "iframe" — renders the URL inside a sandboxed <iframe> (default).
+   * "direct" — fetches a direct .mp4 URL and renders a <video> element.
+   */
+  sourceType?: "iframe" | "direct";
+  /** Required for iframe sources; omitted for direct sources. */
+  buildUrl?: (tmdbId: number, type: "movie" | "tv", season: number, episode: number) => string;
 }
 
 const SOURCES: PlayerSource[] = [
@@ -68,6 +75,12 @@ const SOURCES: PlayerSource[] = [
       type === "movie"
         ? `https://player.smashy.stream/movie/${id}`
         : `https://player.smashy.stream/tv/${id}?s=${s}&e=${e}`,
+  },
+  {
+    id: "akwam",
+    label: "Akwam عربي",
+    sourceType: "direct",
+    // No buildUrl — stream URL is resolved server-side via fetchAkwamStreamUrl
   },
 ];
 
@@ -144,8 +157,16 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
 
   const active = SOURCES.find((src) => src.id === sourceId) ?? SOURCES[0];
   const iframeKey = `${sourceId}-${tmdbId}-${s}-${e}`;
-  const iframeSrc = active.buildUrl(tmdbId, type, s, e);
+  const iframeSrc =
+    active.sourceType === "direct"
+      ? ""
+      : (active.buildUrl?.(tmdbId, type, s, e) ?? "");
   const hasStarted = startedKey === iframeKey;
+
+  // ── Akwam direct-mp4 state ──────────────────────
+  const [akwamUrl, setAkwamUrl] = useState<string | null>(null);
+  const [akwamError, setAkwamError] = useState<string | null>(null);
+  const [akwamLoading, setAkwamLoading] = useState(false);
 
   // Reset elapsed/saved refs when the content changes (e.g. new episode)
   const prevKeyRef = useRef(iframeKey);
@@ -154,8 +175,34 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
       prevKeyRef.current = iframeKey;
       elapsedRef.current = resumeFrom > 0 ? resumeFrom : 0;
       hasSavedRef.current = false;
+      // Reset akwam state when movie or source changes
+      setAkwamUrl(null);
+      setAkwamError(null);
+      setAkwamLoading(false);
     }
   }, [iframeKey, resumeFrom]);
+
+  // Fetch the direct .mp4 URL from Akwam when the user presses play
+  useEffect(() => {
+    if (sourceId !== "akwam" || !hasStarted || akwamUrl !== null || akwamError !== null) {
+      return;
+    }
+    let cancelled = false;
+    setAkwamLoading(true);
+    fetchAkwamStreamUrl(tmdbId)
+      .then(({ url, error }) => {
+        if (cancelled) return;
+        setAkwamUrl(url);
+        setAkwamError(error);
+      })
+      .catch(() => {
+        if (!cancelled) setAkwamError("Error inesperado al contactar con Akwam");
+      })
+      .finally(() => {
+        if (!cancelled) setAkwamLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [sourceId, hasStarted, tmdbId, akwamUrl, akwamError]);
 
   // Start elapsed timer once the user presses play, save every 30 s
   useEffect(() => {
@@ -293,7 +340,44 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
                 )}
               </div>
             </button>
+          ) : active.sourceType === "direct" ? (
+            // ── Native video player for direct .mp4 sources (e.g. Akwam) ─────
+            <>
+              {akwamLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black z-10">
+                  <div className="flex flex-col items-center gap-3">
+                    <svg
+                      className="w-10 h-10 animate-spin text-accent-primary"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" d="M12 3a9 9 0 109 9" />
+                    </svg>
+                    <p className="text-xs text-text-muted">Buscando en Akwam…</p>
+                  </div>
+                </div>
+              )}
+              {!akwamLoading && akwamError && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black">
+                  <p className="text-sm text-red-400 text-center px-6">{akwamError}</p>
+                </div>
+              )}
+              {!akwamLoading && akwamUrl && (
+                // eslint-disable-next-line jsx-a11y/media-has-caption
+                <video
+                  key={akwamUrl}
+                  src={akwamUrl}
+                  controls
+                  autoPlay
+                  className="w-full h-full bg-black"
+                  aria-label={`Reproductor nativo — ${title ?? "película"}`}
+                />
+              )}
+            </>
           ) : (
+            // ── Iframe player for all other sources ───────────────────────────
             <>
               {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black z-10">
