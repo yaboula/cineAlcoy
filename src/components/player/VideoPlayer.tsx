@@ -47,6 +47,30 @@ const SOURCES: PlayerSource[] = [
         : `https://vidsrc.to/embed/tv/${id}/${s}/${e}`,
   },
   {
+    id: "vidsrc-cc",
+    label: "VidSrc CC",
+    buildUrl: (id, type, s, e) =>
+      type === "movie"
+        ? `https://vidsrc.cc/v2/embed/movie/${id}`
+        : `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}`,
+  },
+  {
+    id: "vidsrc-icu",
+    label: "VidSrc ICU",
+    buildUrl: (id, type, s, e) =>
+      type === "movie"
+        ? `https://vidsrc.icu/embed/movie/${id}`
+        : `https://vidsrc.icu/embed/tv/${id}/${s}/${e}`,
+  },
+  {
+    id: "autoembed",
+    label: "AutoEmbed",
+    buildUrl: (id, type, s, e) =>
+      type === "movie"
+        ? `https://player.autoembed.cc/embed/movie/${id}`
+        : `https://player.autoembed.cc/embed/tv/${id}/${s}/${e}`,
+  },
+  {
     id: "2embed",
     label: "2Embed",
     buildUrl: (id, type, s, e) =>
