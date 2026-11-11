@@ -12,14 +12,24 @@ import VideoPlayer from "@/components/player/VideoPlayer";
 import { fetchSeasonEpisodes } from "@/app/actions/tmdb";
 import { getTMDBImageUrl } from "@/lib/utils";
 import type { SeasonSummary, Episode } from "@/types";
-import { Clock, Star } from "lucide-react";
+import { CalendarDays, Clock, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const airDateFormatter = new Intl.DateTimeFormat("es-ES", {
+  dateStyle: "long",
+  timeZone: "UTC",
+});
+
+function formatAirDate(date: string) {
+  return airDateFormatter.format(new Date(date));
+}
 
 interface TVPlayerSectionProps {
   seriesId: number;
   seasons: SeasonSummary[];
   initialEpisodes: Episode[];
   initialSeason: number;
+  today: string;
   backdropUrl?: string | null;
   seriesTitle?: string;
   posterPath?: string | null;
@@ -32,6 +42,7 @@ export default function TVPlayerSection({
   seasons,
   initialEpisodes,
   initialSeason,
+  today,
   backdropUrl,
   seriesTitle,
   posterPath,
@@ -69,26 +80,41 @@ export default function TVPlayerSection({
 
   // Current episode object — for runtime & name
   const currentEp = episodes.find((ep) => ep.episode_number === currentEpisode) ?? null;
+  const airDate = currentEp?.air_date;
+  const upcomingAirDate = airDate && airDate > today ? airDate : null;
 
   return (
     <div className="bg-black py-8">
       <div className="mx-auto max-w-5xl px-0 md:px-4 space-y-6">
         {/* ── Player ────────────────────────────────── */}
-        <VideoPlayer
-          tmdbId={seriesId}
-          type="tv"
-          season={currentSeason}
-          episode={currentEpisode}
-          backdropUrl={backdropUrl}
-          title={seriesTitle ? `${seriesTitle} — T${currentSeason}:E${currentEpisode}` : undefined}
-          posterPath={posterPath}
-          genreIds={genreIds}
-          releaseYear={releaseYear}
-          durationSeconds={currentEp?.runtime ? currentEp.runtime * 60 : undefined}
-          seasonNumber={currentSeason}
-          episodeNumber={currentEpisode}
-          episodeTitle={currentEp?.name}
-        />
+        {upcomingAirDate ? (
+          <div
+            role="status"
+            className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-8 text-center"
+          >
+            <CalendarDays className="h-6 w-6 text-accent-primary" aria-hidden="true" />
+            <p className="font-semibold text-text-primary">Temporada {currentSeason}, episodio {currentEpisode}</p>
+            <p className="text-sm text-text-secondary">
+              Estreno previsto el <time dateTime={upcomingAirDate}>{formatAirDate(upcomingAirDate)}</time>
+            </p>
+          </div>
+        ) : (
+          <VideoPlayer
+            tmdbId={seriesId}
+            type="tv"
+            season={currentSeason}
+            episode={currentEpisode}
+            backdropUrl={backdropUrl}
+            title={seriesTitle ? `${seriesTitle} — T${currentSeason}:E${currentEpisode}` : undefined}
+            posterPath={posterPath}
+            genreIds={genreIds}
+            releaseYear={releaseYear}
+            durationSeconds={currentEp?.runtime ? currentEp.runtime * 60 : undefined}
+            seasonNumber={currentSeason}
+            episodeNumber={currentEpisode}
+            episodeTitle={currentEp?.name}
+          />
+        )}
 
         {/* ── Season + Episode controls ─────────────── */}
         <div className="px-4 md:px-0 space-y-5">
@@ -143,12 +169,14 @@ export default function TVPlayerSection({
           <div className="space-y-1 max-h-80 overflow-y-auto pr-1 -mr-1">
             {episodes.map((ep) => {
               const isActive = ep.episode_number === currentEpisode;
+              const upcomingDate = ep.air_date && ep.air_date > today ? ep.air_date : null;
               const thumbUrl = ep.still_path ? getTMDBImageUrl(ep.still_path, "w342") : null;
 
               return (
                 <button
                   key={ep.id}
                   onClick={() => handleEpisodeSelect(ep.episode_number)}
+                  aria-pressed={isActive}
                   className={cn(
                     "w-full text-left rounded-lg transition-all duration-200 flex items-start gap-3 p-2 group",
                     isActive
@@ -173,7 +201,7 @@ export default function TVPlayerSection({
                         </span>
                       </div>
                     )}
-                    {isActive && (
+                    {isActive && !upcomingDate && (
                       <div className="absolute inset-0 bg-accent-primary/20 flex items-center justify-center">
                         <div className="w-6 h-6 rounded-full bg-accent-primary flex items-center justify-center">
                           <svg viewBox="0 0 10 10" className="w-3 h-3 fill-white ml-0.5">
@@ -205,8 +233,12 @@ export default function TVPlayerSection({
                           {ep.vote_average.toFixed(1)}
                         </span>
                       )}
-                      {ep.air_date && (
-                        <span>{new Date(ep.air_date).getFullYear()}</span>
+                      {upcomingDate ? (
+                        <span className="font-medium text-accent-primary">
+                          Estreno el <time dateTime={upcomingDate}>{formatAirDate(upcomingDate)}</time>
+                        </span>
+                      ) : ep.air_date && (
+                        <span>{ep.air_date.slice(0, 4)}</span>
                       )}
                     </div>
                   </div>

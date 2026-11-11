@@ -72,6 +72,8 @@ export default async function TVPage({ params }: PageProps) {
     : [];
 
   const recsItems = injectTVMediaType(recommendations.results);
+  // TMDB supplies calendar dates in YYYY-MM-DD. Use Spain's date for comparison.
+  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Madrid" });
 
   return (
     <div className="min-h-screen animate-fadeIn">
@@ -102,6 +104,7 @@ export default async function TVPage({ params }: PageProps) {
         seasons={show.seasons}
         initialEpisodes={initialEpisodes}
         initialSeason={firstSeason?.season_number ?? 1}
+        today={today}
         backdropUrl={show.backdrop_path ? getTMDBImageUrl(show.backdrop_path, "w780") : null}
         seriesTitle={show.name}
         posterPath={show.poster_path}
