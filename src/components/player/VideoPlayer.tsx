@@ -2,11 +2,11 @@
 
 // ──────────────────────────────────────────────────
 // VideoPlayer — Multi-source iframe player
-// Default: vidsrc.to
+// Default: vidsrc.sh
 //
-// vidsrc.to embed URLs:
-//   Movie:   https://vidsrc.to/embed/movie/{tmdb_id}
-//   Episode: https://vidsrc.to/embed/tv/{tmdb_id}/{season}/{episode}
+// vidsrc.sh embed URLs:
+//   Movie:   https://vidsrc.sh/embed/movie/{tmdb_id}
+//   Episode: https://vidsrc.sh/embed/tv/{tmdb_id}/{season}/{episode}
 //
 // Security:
 //   - click-to-play: iframe only mounts after user interaction
@@ -39,12 +39,28 @@ interface PlayerSource {
 
 const SOURCES: PlayerSource[] = [
   {
-    id: "vidsrc-to",
+    id: "vidsrc-sh",
     label: "VidSrc",
     buildUrl: (id, type, s, e) =>
       type === "movie"
-        ? `https://vidsrc.to/embed/movie/${id}`
-        : `https://vidsrc.to/embed/tv/${id}/${s}/${e}`,
+        ? `https://vidsrc.sh/embed/movie/${id}`
+        : `https://vidsrc.sh/embed/tv/${id}/${s}/${e}`,
+  },
+  {
+    id: "vidzee",
+    label: "VidZee",
+    buildUrl: (id, type, s, e) =>
+      type === "movie"
+        ? `https://player.vidzee.wtf/embed/movie/${id}`
+        : `https://player.vidzee.wtf/embed/tv/${id}/${s}/${e}`,
+  },
+  {
+    id: "vidlink",
+    label: "VidLink",
+    buildUrl: (id, type, s, e) =>
+      type === "movie"
+        ? `https://vidlink.pro/movie/${id}`
+        : `https://vidlink.pro/tv/${id}/${s}/${e}`,
   },
   {
     id: "vidsrc-cc",
@@ -88,6 +104,7 @@ const SOURCES: PlayerSource[] = [
   },
 ];
 
+const DEFAULT_SOURCE = SOURCES[0];
 const STORAGE_KEY = "cinema_player_source";
 
 // ── Props ────────────────────────────────────────
@@ -149,7 +166,7 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
   const [startedKey, setStartedKey] = useState<string | null>(null);
   // Always initialise to the default — reads localStorage after mount to avoid
   // SSR/client mismatch (React hydration error #418).
-  const [sourceId, setSourceId] = useState<string>("vidsrc-to");
+  const [sourceId, setSourceId] = useState(DEFAULT_SOURCE.id);
 
   // Restore last chosen source from localStorage after hydration
   useEffect(() => {
@@ -159,7 +176,7 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
     } catch { /* ignore */ }
   }, []);
 
-  const active = SOURCES.find((src) => src.id === sourceId) ?? SOURCES[0];
+  const active = SOURCES.find((src) => src.id === sourceId) ?? DEFAULT_SOURCE;
   const iframeKey = `${sourceId}-${tmdbId}-${s}-${e}`;
   const iframeSrc = active.buildUrl(tmdbId, type, s, e);
   const hasStarted = startedKey === iframeKey;
@@ -257,7 +274,7 @@ export default function VideoPlayer({ tmdbId, type, season, episode, backdropUrl
                       )}
                     >
                       {src.label}
-                      {src.id === "vidsrc-to" && (
+                      {src.id === DEFAULT_SOURCE.id && (
                         <span className="ml-1.5 text-[10px] text-accent-primary/70">★ default</span>
                       )}
                     </button>
